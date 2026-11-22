@@ -1,0 +1,3700 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batalha Naval Dinâmica: Mira e Precisão</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a2e;
+            color: #ffffff;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            transition: background-color 1s ease;
+        }
+        body.tempestade {
+            background-color: #111622;
+        }
+        h1 {
+            color: #00fff5;
+            margin-bottom: 5px;
+        }
+        p.subtitle {
+            color: #a2a2d0;
+            font-size: 14px;
+            margin-top: 0;
+        }
+        #gameCanvas {
+            background: linear-gradient(to bottom, #4a90e2 0%, #87ceeb 70%, #1e3c72 70%, #2a5298 100%);
+            border: 4px solid #16213e;
+            border-radius: 8px;
+            display: block;
+            margin: 20px auto;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+            cursor: crosshair;
+        }
+        #menuSelecao {
+            background-color: #16213e;
+            padding: 10px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .btn-barco {
+            background-color: #34495e;
+            color: white;
+            border: 2px solid #7f8c8d;
+            padding: 8px 10px;
+            margin: 0 2px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .btn-barco.selecionado {
+            background-color: #e67e22;
+            border-color: #f39c12;
+        }
+        #controls {
+            background-color: #16213e;
+            padding: 15px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .control-group {
+            margin: 10px 0;
+        }
+        input[type=range] {
+            width: 250px;
+            cursor: pointer;
+        }
+        button.acao {
+            background-color: #ff4757;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 4px;
+        }
+        button.acao:hover {
+            background-color: #ff6b81;
+        }
+        button.radar-especial {
+            background-color: #f1c40f;
+            color: #1a1a2e;
+        }
+        button.radar-especial:hover {
+            background-color: #f39c12;
+        }
+        button.aviao-especial {
+            background-color: #3498db;
+            color: white;
+        }
+        button.aviao-especial:hover {
+            background-color: #2980b9;
+        }
+        button.bombardeiro-especial {
+            background-color: #e67e22;
+            color: white;
+        }
+        button.bombardeiro-especial:hover {
+            background-color: #d35400;
+        }
+        button.acao:disabled {
+            background-color: #7f8c8d;
+            color: #ffffff;
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #status {
+            font-size: 18px;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #ffde59;
+        }
+        body { background: radial-gradient(ellipse at 50% 0%, #1f2a4d 0%, #0b1020 75%) fixed; }
+        body.tempestade { background: radial-gradient(ellipse at 50% 0%, #1a2133 0%, #060810 80%) fixed; }
+        h1 { text-shadow: 0 0 18px rgba(0,255,245,0.35); letter-spacing: 1px; }
+        #gameCanvas { border: 3px solid #0f1a33; border-radius: 12px; max-width: 100%; height: auto;
+            box-shadow: 0 14px 34px rgba(0,0,0,0.65), 0 0 0 1px rgba(0,255,245,0.12); }
+        #controls, #menuSelecao { background: linear-gradient(180deg, rgba(28,42,78,0.92), rgba(16,25,48,0.92));
+            border: 1px solid rgba(0,255,245,0.18); box-shadow: 0 6px 18px rgba(0,0,0,0.45); }
+        button.acao { background-image: linear-gradient(180deg, rgba(255,255,255,0.22), rgba(0,0,0,0.18));
+            box-shadow: 0 3px 0 rgba(0,0,0,0.35); }
+        button.acao:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.35); }
+        .btn-barco { background-image: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(0,0,0,0.15)); }
+        #status { text-shadow: 0 2px 6px rgba(0,0,0,0.6); }
+        #gameCanvas { background: transparent !important; margin: 0 !important; position: relative; z-index: 1; }
+        #palco { position: relative; width: fit-content; max-width: 100%; margin: 20px auto; }
+        #canvas3d { position: absolute; left: 3px; top: 3px; width: calc(100% - 6px); height: calc(100% - 6px); border-radius: 9px; z-index: 0; background: #4a90e2; }
+        /* ===== Tela inicial + tutorial ===== */
+        [hidden] { display: none !important; }
+        #tela { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box; background: radial-gradient(ellipse at 50% 30%, rgba(20,40,90,.82), rgba(4,8,20,.93)); backdrop-filter: blur(3px); }
+        .tl-card { width: 100%; max-width: 960px; max-height: 92vh; overflow-y: auto; box-sizing: border-box; text-align: left; background: linear-gradient(160deg,#16213e,#0e1630); border: 2px solid #24407a; border-radius: 18px; box-shadow: 0 24px 70px rgba(0,0,0,.65); padding: 22px 26px; }
+        .tl-centro { max-width: 520px; text-align: center; padding: 38px 30px; }
+        .tl-ancora { font-size: 64px; filter: drop-shadow(0 0 14px #00fff5); }
+        .tl-centro h2 { color: #00fff5; font-size: 32px; margin: 8px 0 6px; text-shadow: 0 0 18px rgba(0,255,245,.45); }
+        .tl-centro p { color: #a2a2d0; margin: 0 0 26px; }
+        .tl-play, .tl-sec { display: block; margin: 10px auto; min-width: 240px; font-size: 18px; font-weight: bold; border: 0; border-radius: 12px; padding: 14px 30px; cursor: pointer; transition: transform .15s, filter .15s; }
+        .tl-play { background: linear-gradient(135deg,#00fff5,#4a90e2); color: #06122a; box-shadow: 0 0 22px rgba(0,255,245,.35); }
+        .tl-sec { background: #1f2f5c; color: #e8f1ff; border: 1px solid #35509a; }
+        .tl-play:hover, .tl-sec:hover { transform: translateY(-2px); filter: brightness(1.12); }
+        .tl-topo { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; margin-bottom: 14px; }
+        .tl-topo h2 { margin: 0; color: #00fff5; font-size: 22px; }
+        #tlAbas { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tl-aba { background: #1b2a52; color: #cfe0ff; border: 1px solid #2f4a8c; border-radius: 999px; padding: 7px 14px; cursor: pointer; font-size: 14px; }
+        .tl-aba.ativa { background: #00fff5; color: #06122a; border-color: #00fff5; font-weight: bold; }
+        .tl-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 12px; }
+        .tl-barco, .tl-hab { background: #101a38; border: 1px solid #263c78; border-radius: 12px; padding: 12px 14px; }
+        .tl-bt { display: flex; align-items: center; gap: 8px; font-size: 17px; margin-bottom: 8px; }
+        .tl-bt span { font-size: 26px; }
+        .tl-linha { display: flex; justify-content: space-between; font-size: 13px; color: #a2b4e0; margin: 3px 0; }
+        .tl-linha span { color: #fff; }
+        .tl-barra { height: 7px; background: #0a1128; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+        .tl-barra i { display: block; height: 100%; background: linear-gradient(90deg,#00fff5,#4a90e2); }
+        .tl-barco p, .tl-hab p { font-size: 13px; line-height: 1.45; color: #cfd8f0; margin: 6px 0 0; }
+        .tl-passos { padding-left: 22px; line-height: 1.6; font-size: 15px; }
+        .tl-passos li { margin-bottom: 8px; }
+        .tl-aviso { background: #2a2140; border-left: 4px solid #ffd166; border-radius: 8px; padding: 10px 14px; font-size: 14px; line-height: 1.5; margin-top: 10px; }
+        .tl-intro { color: #cfd8f0; font-size: 14px; line-height: 1.5; margin: 0 0 12px; }
+        .tl-svg { width: 100%; max-width: 360px; display: block; margin: 8px auto 14px; background: linear-gradient(#1d4f91,#87ceeb); border-radius: 10px; }
+        .tl-rodape { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-top: 18px; }
+        .tl-rodape button { display: inline-block; margin: 0; min-width: 0; font-size: 16px; padding: 11px 22px; }
+        #btnAjuda { position: fixed; top: 12px; right: 12px; z-index: 900; background: #1f2f5c; color: #e8f1ff; border: 1px solid #35509a; border-radius: 999px; padding: 8px 14px; cursor: pointer; font-size: 14px; }
+        #btnSairSalaAtiva { position: fixed; top: 12px; left: 12px; z-index: 950; background: #7f1d35; color: #fff; border: 1px solid #ff7187; border-radius: 999px; padding: 8px 14px; cursor: pointer; font-size: 14px; font-weight: bold; }
+/* ===== Tela de salas ===== */
+#telaSalas input:focus { outline:none; border-color:#00fff5; box-shadow:0 0 0 2px rgba(0,255,245,.25); }
+#telaSalas .tl-play, #telaSalas .tl-sec { display:inline-block; margin:0; }
+#listaJogadores .jog { display:flex; align-items:center; justify-content:center; gap:8px; margin:4px 0; }
+#listaJogadores .jog .tag { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:bold; }
+.tag-p1 { background:#00fff5; color:#06122a; }
+.tag-p2 { background:#ff4757; color:#fff; }
+.tag-spec { background:#f1c40f; color:#1a1a2e; }
+    </style>
+</head>
+<body>
+    <!-- Tela inicial e tutorial -->
+    <button id="btnAjuda" hidden onclick="abrirTutorial()">❓ Como jogar</button>
+    <button id="btnSairSalaAtiva" hidden onclick="sairDaSala()">🚪 Sair da sala</button>
+    <div id="tela">
+        <div id="tlInicio" class="tl-card tl-centro">
+            <div class="tl-ancora">⚓</div>
+            <h2>Batalha Naval Dinâmica</h2>
+            <p>Mira e precisão · 2 jogadores no mesmo computador</p>
+            <button class="tl-play" onclick="iniciarJogo()">▶ JOGAR</button>
+            <button class="tl-sec" onclick="abrirTutorial()">📖 COMO JOGAR</button>
+    <button class="tl-sec" onclick="abrirTelaSalas()">🌐 Multiplayer Online</button>
+        </div>
+        <div id="tlTutorial" class="tl-card" hidden>
+            <div class="tl-topo"><h2>📖 Como jogar</h2><div id="tlAbas"></div></div>
+            <div id="tlConteudo"></div>
+            <div class="tl-rodape">
+                <button class="tl-sec" id="tlVoltar" onclick="voltarInicio()">◀ Voltar</button>
+                <button class="tl-play" id="tlOk" onclick="iniciarJogo()">▶ Entendi, vamos jogar!</button>
+            </div>
+        </div>
+    </div>
+    <!-- ===== TELA DE SALAS (MULTIPLAYER) ===== -->
+    <div id="telaSalas" hidden style="position:fixed;inset:0;z-index:1001;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:radial-gradient(ellipse at 50% 30%,rgba(20,40,90,.92),rgba(4,8,20,.97))">
+      <div class="tl-card" style="max-width:560px;text-align:center">
+        <div class="tl-ancora">🌐</div>
+        <h2 style="color:#00fff5;margin:8px 0 6px">Multiplayer Online</h2>
+        <p style="color:#a2a2d0;margin:0 0 22px">Crie uma sala ou entre com um código de 6 caracteres</p>
+
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:18px">
+          <button class="tl-play" style="min-width:0;padding:12px 22px" onclick="criarSalaUI()">➕ Criar Sala</button>
+          <button class="tl-sec" style="min-width:0;padding:12px 22px" onclick="entrarSalaUI()">🔑 Entrar</button>
+        </div>
+
+        <!-- Painel: criar -->
+        <div id="painelCriar" hidden>
+          <label style="display:block;color:#cfe0ff;font-size:14px;margin-bottom:6px">Código da sala (6 caracteres)</label>
+          <div style="display:flex;gap:8px;justify-content:center;margin-bottom:10px">
+            <input id="inputCodigoCriar" maxlength="6" placeholder="ABC123" style="width:140px;padding:10px;border-radius:8px;border:1px solid #35509a;background:#0e1630;color:#fff;font-size:18px;text-align:center;letter-spacing:3px;text-transform:uppercase">
+            <button class="tl-sec" style="min-width:0;padding:10px 14px" onclick="gerarCodigoAleatorio()">🎲 Gerar</button>
+          </div>
+          <button class="tl-play" style="min-width:0;padding:11px 26px" onclick="confirmarCriarSala()">Criar</button>
+          <p id="msgCriar" style="color:#ff6b81;font-size:13px;margin:10px 0 0;min-height:18px"></p>
+        </div>
+
+        <!-- Painel: entrar -->
+        <div id="painelEntrar" hidden>
+          <label style="display:block;color:#cfe0ff;font-size:14px;margin-bottom:6px">Digite o código da sala</label>
+          <input id="inputCodigoEntrar" maxlength="6" placeholder="ABC123" style="width:160px;padding:10px;border-radius:8px;border:1px solid #35509a;background:#0e1630;color:#fff;font-size:18px;text-align:center;letter-spacing:3px;text-transform:uppercase">
+          <div style="margin-top:10px">
+            <button class="tl-play" style="min-width:0;padding:11px 26px" onclick="confirmarEntrarSala()">Entrar</button>
+            <button class="tl-sec" style="min-width:0;padding:11px 22px" onclick="voltarTelaSalas()">Voltar</button>
+          </div>
+          <p id="msgEntrar" style="color:#ff6b81;font-size:13px;margin:10px 0 0;min-height:18px"></p>
+        </div>
+
+        <!-- Painel: espera (sala criada, aguardando jogadores) -->
+        <div id="painelEspera" hidden>
+          <h3 style="color:#ffde59;margin:0 0 10px">Sala criada!</h3>
+          <p style="color:#a2a2d0;margin:0 0 8px;font-size:14px">Compartilhe este código:</p>
+          <div id="codigoExibido" style="font-size:34px;font-weight:bold;letter-spacing:6px;color:#00fff5;background:#0a1128;padding:14px 22px;border-radius:12px;display:inline-block;margin-bottom:16px;box-shadow:0 0 20px rgba(0,255,245,.25)">------</div>
+          <p style="color:#cfe0ff;font-size:14px;margin:0 0 6px">Jogadores conectados:</p>
+          <div id="listaJogadores" style="color:#a2a2d0;font-size:14px;line-height:1.8;margin-bottom:16px">Nenhum jogador ainda…</div>
+          <button class="tl-sec" style="min-width:0;padding:10px 20px" onclick="sairDaSala()">Sair</button>
+        </div>
+
+        <!-- Botão de voltar da espera ao menu -->
+        <button id="btnVoltarSalas" class="tl-sec" hidden style="min-width:0;padding:10px 20px;margin-top:14px" onclick="voltarTelaSalas()">◀ Voltar</button>
+      </div>
+    </div>
+
+    <h1>Batalha Naval Dinâmica: Mira e Precisão</h1>
+    <p class="subtitle">Trabalho Escolar: Função Motora Fina, Adaptação e Movimento</p>
+
+    <div id="status">Jogador 1: Escolha o tipo de barco e clique no mar (esquerda) para posicionar (0/6).</div>
+
+    <!-- Trilha 1: Something Secret Steers Us -->
+    <audio id="musicaSecret">
+        <source src="40. Something Secret Steers Us.mp3" type="audio/mpeg">
+        Seu navegador não suporta áudio.
+    </audio>
+
+    <!-- Trilha 2: Dark Energy -->
+    <audio id="musicaDarkEnergy">
+        <source src="05. Dark Energy.mp3" type="audio/mpeg">
+        Seu navegador não suporta áudio.
+    </audio>
+
+    <!-- Trilha 3: Triage at Dawn (Toca 1 vez ao Fim de Jogo) -->
+    <audio id="musicaTriage">
+        <source src="17. Triage at Dawn.mp3" type="audio/mpeg">
+        Seu navegador não suporta áudio.
+    </audio>
+
+    <!-- Música de abertura da batalha: toca uma única vez após os dois jogadores posicionarem os barcos -->
+    <audio id="musicaAberturaBatalha" preload="auto">
+        <source src="04. Brane Scan.mp3" type="audio/mpeg">
+        Seu navegador não suporta áudio.
+    </audio>
+
+    <!-- Menu de Seleção de Barcos -->
+    <div id="menuSelecao">
+        <button id="btnNormal" class="btn-barco selecionado" onclick="selecionarTipoBarco('normal')">⛵ Normal</button>
+        <button id="btnRapido" class="btn-barco" onclick="selecionarTipoBarco('rapido')">🚤 Lancha</button>
+        <button id="btnPesado" class="btn-barco" onclick="selecionarTipoBarco('pesado')">🚢 Blindado</button>
+        <button id="btnSub" class="btn-barco" onclick="selecionarTipoBarco('submarino')">🐋 Submarino</button>
+        <button id="btnCarrier" class="btn-barco" onclick="selecionarTipoBarco('carrier')">✈️ Carrier</button>
+        <button id="btnDestroyer" class="btn-barco" onclick="selecionarTipoBarco('destroyer')">🛡️ Destroyer</button>
+        <button id="btnRadar" class="btn-barco" onclick="selecionarTipoBarco('radar')">📡 Radar</button>
+    </div>
+
+    <!-- Tela do Jogo (Canvas) -->
+    <div id="palco"><canvas id="canvas3d"></canvas><canvas id="gameCanvas" width="800" height="400"></canvas></div>
+
+    <div id="controlesCameraEspectador" hidden style="max-width:800px;margin:8px auto 14px;padding:10px 14px;border:1px solid rgba(0,255,245,.25);border-radius:10px;background:rgba(16,25,48,.9);color:#cfe0ff;box-sizing:border-box">
+        <div style="font-weight:bold;margin-bottom:5px">👁️ Modo espectador — visão livre do campo</div>
+        <div style="font-size:13px;margin-bottom:6px">Arraste o mar para os lados ou use a barra para acompanhar qualquer parte da batalha.</div>
+        <input id="cameraEspectador" type="range" min="0" max="1600" step="5" value="800" style="width:100%;max-width:100%;cursor:ew-resize">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#91a6d3"><span>Jogador 1</span><span>Centro do campo</span><span>Jogador 2</span></div>
+        <button id="btnAtivarAudioEspectador" hidden type="button" onclick="habilitarAudioEspectador()" style="margin-top:10px;padding:8px 14px;border:1px solid #35509a;border-radius:8px;background:#1f2f5c;color:#e8f1ff;cursor:pointer">🔊 Ativar música do espectador</button>
+    </div>
+
+    <div id="controls" style="display: none;">
+        <div class="control-group">
+            <label>Ângulo do Canhão: <span id="valorAngulo">45</span>°</label><br>
+            <input type="range" id="inputAngulo" min="10" max="80" value="45">
+        </div>
+        <div class="control-group">
+            <label>Força do Tiro: <span id="valorForca">50</span></label><br>
+            <input type="range" id="inputForca" min="20" max="100" value="50">
+        </div>
+        <div>
+            <button class="acao" id="btnDisparar" onclick="disparar()">DISPARAR CANHÃO!</button>
+            <button class="acao radar-especial" id="btnRadarEspecial" onclick="usarRadarEspecial()">📡 RADAR</button>
+            <button class="acao aviao-especial" id="btnAviaoEspecial" onclick="usarAviaoTorpedeiro()">✈️ TORPEDEIRO</button>
+            <button class="acao bombardeiro-especial" id="btnBombardeiroEspecial" onclick="usarAviaoBombardeiro()">💣 BOMBARDEIRO</button>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      // Chave publishable: é própria para uso no navegador. Nunca coloque sb_secret aqui.
+      const SUPABASE_URL = "https://tutqbunrfgouxgycmzwq.supabase.co";
+      const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_-RfHJvKi0JbelHM8DVxE_Q_saDs97fP";
+      const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: false,
+          storage: window.sessionStorage,
+          storageKey: 'batalha_naval_supabase_session'
+        },
+        realtime: { params: { eventsPerSecond: 30 } }
+      });
+
+      // Mantém um sentinel para os timestamps que o código antigo do jogo já usa.
+      // O adaptador converte o sentinel para Date.now() antes de gravar no Postgres.
+      const firebase = { database: { ServerValue: { TIMESTAMP: { __supabaseServerTimestamp: true } } } };
+
+      const supabaseAuthReady = (async () => {
+        const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+        if (sessionError) throw sessionError;
+        if (sessionData && sessionData.session && sessionData.session.user) return sessionData.session.user;
+        const { data, error } = await supabaseClient.auth.signInAnonymously();
+        if (error) throw error;
+        if (!data || !data.user) throw new Error('O Supabase não retornou um usuário anônimo.');
+        return data.user;
+      })();
+
+      function converterTimestampsSupabase(valor) {
+        if (valor && typeof valor === 'object' && valor.__supabaseServerTimestamp === true) return Date.now();
+        if (Array.isArray(valor)) return valor.map(converterTimestampsSupabase);
+        if (valor && typeof valor === 'object') {
+          const saida = {};
+          for (const [chave, item] of Object.entries(valor)) saida[chave] = converterTimestampsSupabase(item);
+          return saida;
+        }
+        return valor;
+      }
+
+      function copiarJsonSupabase(valor) {
+        if (valor === undefined) return null;
+        return JSON.parse(JSON.stringify(valor));
+      }
+
+      function obterValorCaminho(objeto, caminho) {
+        let atual = objeto;
+        for (const parte of caminho) {
+          if (atual === null || atual === undefined || !Object.prototype.hasOwnProperty.call(Object(atual), parte)) return null;
+          atual = atual[parte];
+        }
+        return atual === undefined ? null : atual;
+      }
+
+      class SupabaseSnapshot {
+        constructor(valor) { this._valor = valor === undefined ? null : valor; }
+        val() { return copiarJsonSupabase(this._valor); }
+        exists() { return this._valor !== null && this._valor !== undefined; }
+      }
+
+      let supabaseRoomChannel = null;
+      let supabaseRoomChannelCode = null;
+      let supabaseRoomChannelReady = null;
+      let supabaseRoomChannelStatus = 'CLOSED';
+      const supabaseRoomListeners = new Map();
+
+      async function obterDadosSalaSupabase(codigo) {
+        const { data, error } = await supabaseClient
+          .from('game_rooms')
+          .select('room_data')
+          .eq('code', codigo)
+          .maybeSingle();
+        if (error) throw error;
+        return data ? data.room_data : null;
+      }
+
+      function notificarListenersSalaSupabase(codigo, valor) {
+        const listeners = supabaseRoomListeners.get(codigo);
+        if (!listeners || !listeners.size) return;
+        for (const item of Array.from(listeners)) {
+          try { item.callback(new SupabaseSnapshot(obterValorCaminho(valor, item.caminho))); }
+          catch (e) { console.error('[Supabase Realtime] erro no callback:', e); }
+        }
+      }
+
+      async function atualizarListenersSalaSupabase(codigo, eventType) {
+        if (eventType === 'DELETE') {
+          notificarListenersSalaSupabase(codigo, null);
+          return;
+        }
+        try {
+          const sala = await obterDadosSalaSupabase(codigo);
+          notificarListenersSalaSupabase(codigo, sala);
+        } catch (e) {
+          console.warn('[Supabase Realtime] falha ao atualizar sala:', e);
+        }
+      }
+
+      function receberBroadcastSalaSupabase(evento, payload) {
+        if (!payload || (payload.dono && typeof minhaSala !== 'undefined' && payload.dono === minhaSala.papel)) return;
+        try {
+          if (evento === 'air_attack_frame') {
+            if (typeof sincronizarAtaqueAereoRecebido === 'function') {
+              sincronizarAtaqueAereoRecebido({ ataqueAereo: payload });
+            }
+            if (typeof desenharCenario === 'function') desenharCenario();
+            return;
+          }
+          if (evento === 'trajectory_frame') {
+            if (minhaSala.papel !== 'espectador' && Number.isFinite(Number(payload.cameraX)) && typeof limitarCameraX === 'function') {
+              cameraX = limitarCameraX(payload.cameraX);
+            }
+            const proj = payload.bala;
+            if (proj && proj.ativa && Number.isFinite(Number(proj.x)) && Number.isFinite(Number(proj.y))) {
+              const novoId = String(proj.id || `${proj.dono || 'remoto'}_${proj.x}_${proj.y}`);
+              if (novoId !== idBalaRemota) { idBalaRemota = novoId; rastroBalaRemota = []; }
+              balaRemota = { x: Number(proj.x), y: Number(proj.y) };
+            } else {
+              balaRemota = null; idBalaRemota = null; rastroBalaRemota = [];
+            }
+            if (typeof sincronizarAtaqueAereoRecebido === 'function') {
+              sincronizarAtaqueAereoRecebido({ ataqueAereo: payload.ataqueAereo });
+            }
+            if (typeof desenharCenario === 'function') desenharCenario();
+          }
+        } catch (e) {
+          console.warn('[Supabase Broadcast] falha ao aplicar pacote remoto:', e);
+        }
+      }
+
+      async function garantirCanalSalaSupabase(codigo) {
+        if (supabaseRoomChannel && supabaseRoomChannelCode === codigo && supabaseRoomChannelReady) {
+          return supabaseRoomChannelReady;
+        }
+        if (supabaseRoomChannel) {
+          try { await supabaseClient.removeChannel(supabaseRoomChannel); } catch (_) {}
+        }
+        supabaseRoomChannel = null;
+        supabaseRoomChannelCode = codigo;
+        supabaseRoomChannelStatus = 'CLOSED';
+
+        const channel = supabaseClient.channel(`game-room:${codigo}`, {
+          config: {
+            private: true,
+            broadcast: { self: false, ack: false },
+            presence: { key: (typeof minhaSala !== 'undefined' ? minhaSala.uid : null) || 'guest' }
+          }
+        });
+        supabaseRoomChannel = channel;
+
+        channel
+          .on('postgres_changes', {
+            event: '*', schema: 'public', table: 'game_rooms', filter: `code=eq.${codigo}`
+          }, payload => {
+            atualizarListenersSalaSupabase(codigo, payload && payload.eventType);
+          })
+          .on('broadcast', { event: 'air_attack_frame' }, ({ payload }) => receberBroadcastSalaSupabase('air_attack_frame', payload))
+          .on('broadcast', { event: 'trajectory_frame' }, ({ payload }) => receberBroadcastSalaSupabase('trajectory_frame', payload))
+          .on('broadcast', { event: 'water_impact' }, ({ payload }) => {
+            try {
+              const x = Number(payload && payload.x);
+              const y = Number(payload && payload.y);
+              if (!Number.isFinite(x)) return;
+              const altura = Number.isFinite(y) ? y : 330;
+              if (typeof criarRespingo === 'function') criarRespingo(x, altura, 1);
+              if (typeof criarOnda === 'function') criarOnda(x, 5);
+              if (typeof splashes !== 'undefined') splashes.push({ x, y: altura, raio: 8, alpha: 1.0 });
+              if (typeof desenharCenario === 'function') desenharCenario();
+            } catch (e) {
+              console.warn('[Supabase Broadcast] falha ao reproduzir impacto na água:', e);
+            }
+          })
+          .on('presence', { event: 'sync' }, () => {
+            // O estado de presença fica disponível para futuras telas de lobby.
+          });
+
+        supabaseRoomChannelReady = new Promise((resolve, reject) => {
+          let resolvido = false;
+          channel.subscribe(async status => {
+            supabaseRoomChannelStatus = status;
+            if (status === 'SUBSCRIBED' && !resolvido) {
+              resolvido = true;
+              try {
+                await channel.track({
+                  uid: (typeof minhaSala !== 'undefined' ? minhaSala.uid : null) || null,
+                  papel: (typeof minhaSala !== 'undefined' ? minhaSala.papel : null) || null,
+                  conectado: true,
+                  entrouEm: Date.now()
+                });
+              } catch (e) { console.warn('[Supabase Presence] não foi possível registrar presença:', e); }
+              resolve(channel);
+            } else if ((status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') && !resolvido) {
+              resolvido = true;
+              reject(new Error(`Realtime do Supabase: ${status}`));
+            }
+          });
+        });
+        return supabaseRoomChannelReady;
+      }
+
+      async function enviarBroadcastSalaSupabase(evento, payload) {
+        const codigo = typeof minhaSala !== 'undefined' ? minhaSala.codigo : null;
+        if (!codigo) return;
+        const channel = await garantirCanalSalaSupabase(codigo);
+        const resultado = await channel.send({ type: 'broadcast', event: evento, payload });
+        if (resultado !== 'ok') throw new Error(`Broadcast Supabase retornou: ${resultado}`);
+      }
+
+      async function descartarCanalSalaSupabase() {
+        const channel = supabaseRoomChannel;
+        supabaseRoomChannel = null;
+        supabaseRoomChannelCode = null;
+        supabaseRoomChannelReady = null;
+        supabaseRoomChannelStatus = 'CLOSED';
+        if (channel) {
+          try { await channel.untrack(); } catch (_) {}
+          try { await supabaseClient.removeChannel(channel); } catch (e) { console.warn('[Supabase] erro ao fechar canal:', e); }
+        }
+      }
+
+      class SupabaseRoomRef {
+        constructor(path) { this.path = String(path || '').split('/').filter(Boolean); }
+        child(parte) { return new SupabaseRoomRef([...this.path, ...String(parte).split('/').filter(Boolean)].join('/')); }
+        _codigo() {
+          if (this.path[0] !== 'salas' || !this.path[1]) throw new Error('Caminho de sala inválido no Supabase.');
+          return this.path[1];
+        }
+        _subPath() { return this.path.slice(2); }
+        async once(evento) {
+          if (evento !== 'value') throw new Error('O adaptador Supabase suporta apenas once("value").');
+          const room = await obterDadosSalaSupabase(this._codigo());
+          return new SupabaseSnapshot(obterValorCaminho(room, this._subPath()));
+        }
+        async set(valor) {
+          const codigo = this._codigo();
+          const caminho = this._subPath();
+          const pronto = converterTimestampsSupabase(valor);
+          if (caminho.length === 2 && caminho[0] === 'estado' && caminho[1] === 'ataqueAereo') {
+            await enviarBroadcastSalaSupabase('air_attack_frame', pronto);
+            return;
+          }
+          if (!caminho.length) throw new Error('A criação da sala deve usar create_game_room().');
+          const { error } = await supabaseClient.rpc('patch_game_room', {
+            p_code: codigo, p_path: caminho, p_value: pronto, p_merge: false
+          });
+          if (error) throw error;
+        }
+        async update(objeto) {
+          const codigo = this._codigo();
+          const caminho = this._subPath();
+          if (!caminho.length) throw new Error('Atualização da raiz não permitida; atualize um campo da sala.');
+          if (caminho.length === 1 && caminho[0] === 'estado' && objeto && typeof objeto === 'object') {
+            const chaves = Object.keys(objeto);
+            const apenasTrajetoria = chaves.length > 0 && chaves.every(k => ['cameraX', 'bala', 'ataqueAereo'].includes(k));
+            if (apenasTrajetoria) {
+              await enviarBroadcastSalaSupabase('trajectory_frame', {
+                dono: (typeof minhaSala !== 'undefined' ? minhaSala.papel : null) || null,
+                cameraX: objeto.cameraX,
+                bala: objeto.bala,
+                ataqueAereo: objeto.ataqueAereo
+              });
+              return;
+            }
+          }
+          const pronto = converterTimestampsSupabase(objeto);
+          const { error } = await supabaseClient.rpc('patch_game_room', {
+            p_code: codigo, p_path: caminho, p_value: pronto, p_merge: true
+          });
+          if (error) throw error;
+        }
+        async remove() {
+          const codigo = this._codigo();
+          const caminho = this._subPath();
+          if (!caminho.length) {
+            const { error } = await supabaseClient.rpc('leave_game_room', { p_code: codigo });
+            if (error) throw error;
+            return;
+          }
+          const { error } = await supabaseClient.rpc('patch_game_room', {
+            p_code: codigo, p_path: caminho, p_value: null, p_merge: false
+          });
+          if (error) throw error;
+        }
+        async transaction(atualizador) {
+          const codigo = this._codigo();
+          const caminho = this._subPath();
+          if (!caminho.length) throw new Error('Transação sobre a sala inteira não suportada; use RPC específico.');
+          for (let tentativa = 0; tentativa < 8; tentativa++) {
+            const snap = await this.once('value');
+            const atual = snap.val();
+            const proximo = atualizador(copiarJsonSupabase(atual));
+            if (proximo === undefined) return { committed: false, snapshot: snap };
+            const { data, error } = await supabaseClient.rpc('compare_and_set_game_room_path', {
+              p_code: codigo,
+              p_path: caminho,
+              p_expected: converterTimestampsSupabase(atual),
+              p_next: converterTimestampsSupabase(proximo)
+            });
+            if (error) throw error;
+            if (data === true) return { committed: true, snapshot: new SupabaseSnapshot(proximo) };
+          }
+          const finalSnap = await this.once('value');
+          return { committed: false, snapshot: finalSnap };
+        }
+        on(evento, callback, callbackErro) {
+          if (evento !== 'value') throw new Error('O adaptador Supabase suporta apenas on("value").');
+          const codigo = this._codigo();
+          const caminho = this._subPath();
+          if (!supabaseRoomListeners.has(codigo)) supabaseRoomListeners.set(codigo, new Set());
+          const registro = { callback, caminho };
+          supabaseRoomListeners.get(codigo).add(registro);
+          garantirCanalSalaSupabase(codigo)
+            .then(() => this.once('value'))
+            .then(snap => { if (supabaseRoomListeners.get(codigo)?.has(registro)) callback(snap); })
+            .catch(error => { console.error('[Supabase Realtime] não foi possível iniciar a escuta:', error); if (callbackErro) callbackErro(error); });
+        }
+        off(evento, callback) {
+          const codigo = this._codigo();
+          const registros = supabaseRoomListeners.get(codigo);
+          if (!registros) return;
+          for (const registro of Array.from(registros)) {
+            if ((!callback || registro.callback === callback) && (!evento || evento === 'value')) registros.delete(registro);
+          }
+          if (!registros.size) supabaseRoomListeners.delete(codigo);
+        }
+      }
+
+      const database = { ref: caminho => new SupabaseRoomRef(caminho) };
+    </script>
+<script>
+/* =========================================================
+   MÓDULO DE SALAS ONLINE (Supabase Postgres + Realtime)
+   ========================================================= */
+const REF_SALAS = 'salas';
+let minhaSala = { codigo: null, papel: null, uid: null };
+let unsubscribeSala = null;
+
+async function garantirAutenticacaoSupabase() {
+  const user = await supabaseAuthReady;
+  if (!user || !user.id) throw new Error('Não foi possível autenticar anonimamente no Supabase.');
+  minhaSala.uid = user.id;
+  return user;
+}
+
+supabaseAuthReady.then(user => {
+  minhaSala.uid = user.id;
+  console.log('[Supabase Auth] sessão anônima ativa:', user.id);
+}).catch(error => {
+  console.error('[Supabase Auth] falha no login anônimo:', error);
+  const msg = document.getElementById('msgEntrar') || document.getElementById('msgCriar');
+  if (msg) msg.innerText = 'Falha na autenticação Supabase: ' + error.message;
+});
+const TEMPO_EXPIRACAO_SALA_MS = 2 * 60 * 60 * 1000; // 2 horas sem atividade
+const INTERVALO_HEARTBEAT_SALA_MS = 60 * 1000;
+let heartbeatSalaTimer = null;
+let callbackConexaoSala = null;
+let presencaSalaRef = null;
+
+// O UID agora vem do Supabase Authentication anônimo.
+
+// --- utilidades ---
+function normalizarCodigo(s) {
+  return (s || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+}
+function gerarCodigoAleatorio() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sem 0/O/1/I para evitar confusão
+  let s = '';
+  for (let i = 0; i < 6; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  document.getElementById('inputCodigoCriar').value = s;
+}
+function mostrarPainel(id) {
+  ['painelCriar', 'painelEntrar', 'painelEspera'].forEach(p => {
+    document.getElementById(p).hidden = (p !== id);
+  });
+  document.getElementById('btnVoltarSalas').hidden = (id !== 'painelCriar' && id !== 'painelEntrar');
+}
+function abrirTelaSalas() {
+  document.getElementById('tela').hidden = true;
+  document.getElementById('telaSalas').hidden = false;
+  mostrarPainel(null);
+}
+function voltarTelaSalas() {
+  mostrarPainel(null);
+  document.getElementById('msgCriar').innerText = '';
+  document.getElementById('msgEntrar').innerText = '';
+}
+
+// ===== Ciclo de vida das salas: presença, saída e expiração =====
+function salaEstaExpirada(sala, agora = Date.now()) {
+  if (!sala || typeof sala !== 'object') return false;
+  const atividade = Number(sala.ultimaAtividade || sala.criadoEm || 0);
+  return atividade > 0 && (agora - atividade) >= TEMPO_EXPIRACAO_SALA_MS;
+}
+
+async function removerSalaSeExpirada(ref) {
+  try {
+    const { data, error } = await supabaseClient.rpc('expire_game_room', { p_code: ref._codigo() });
+    if (error) throw error;
+    return data === true;
+  } catch (e) {
+    console.warn('[salas] não foi possível verificar/expirar a sala:', e);
+    return false;
+  }
+}
+
+// A limpeza global da raiz /salas não é executada para não permitir listar
+// todas as salas. A expiração é checada ao criar/entrar em um código específico.
+
+function pararPresencaSala() {
+  if (heartbeatSalaTimer !== null) {
+    clearInterval(heartbeatSalaTimer);
+    heartbeatSalaTimer = null;
+  }
+  // Supabase Presence remove a sessão automaticamente quando o WebSocket cai.
+  // No encerramento voluntário, apenas retiramos a presença deste canal.
+  if (supabaseRoomChannel && supabaseRoomChannelStatus === 'SUBSCRIBED') {
+    supabaseRoomChannel.untrack().catch(e => console.warn('[Supabase Presence] falha ao sair:', e));
+  }
+  presencaSalaRef = null;
+}
+
+function configurarPresencaSala(codigo, papel) {
+  pararPresencaSala();
+  presencaSalaRef = { codigo, papel };
+  garantirCanalSalaSupabase(codigo).then(channel => {
+    return channel.track({
+      uid: minhaSala.uid,
+      papel,
+      conectado: true,
+      entrouEm: Date.now()
+    });
+  }).catch(e => console.warn('[Supabase Presence] não foi possível registrar presença:', e));
+
+  const salaRef = database.ref(`${REF_SALAS}/${codigo}`);
+  salaRef.child('ultimaAtividade').set(firebase.database.ServerValue.TIMESTAMP)
+    .catch(e => console.warn('[Supabase Presence] falha ao marcar atividade:', e));
+
+  heartbeatSalaTimer = setInterval(() => {
+    if (minhaSala.codigo !== codigo || minhaSala.papel !== papel) return;
+    salaRef.child('ultimaAtividade').set(firebase.database.ServerValue.TIMESTAMP)
+      .catch(e => console.warn('[Supabase Presence] falha no heartbeat:', e));
+  }, INTERVALO_HEARTBEAT_SALA_MS);
+}
+
+function voltarAoMenuDepoisDaSala(mensagem) {
+  pararPresencaSala();
+  if (unsubscribeSala) {
+    try { unsubscribeSala(); } catch (e) { console.warn('[salas] falha ao parar escuta:', e); }
+    unsubscribeSala = null;
+  }
+  descartarCanalSalaSupabase().catch(e => console.warn('[Supabase] falha ao encerrar canal:', e));
+  minhaSala.codigo = null;
+  minhaSala.papel = null;
+  document.getElementById('btnSairSalaAtiva').hidden = true;
+  document.getElementById('telaSalas').hidden = true;
+  document.getElementById('tlInicio').hidden = false;
+  document.getElementById('tlTutorial').hidden = true;
+  document.getElementById('tela').hidden = false;
+  document.getElementById('btnAjuda').hidden = true;
+  document.body.style.overflow = 'hidden';
+  const status = document.getElementById('status');
+  if (status && mensagem) status.innerText = mensagem;
+}
+
+async function sairDaSala() {
+  const codigo = minhaSala.codigo;
+  const papel = minhaSala.papel;
+  if (!codigo || !papel) return;
+
+  pararPresencaSala();
+  if (unsubscribeSala) {
+    try { unsubscribeSala(); } catch (e) { console.warn('[sair] falha ao parar escuta:', e); }
+    unsubscribeSala = null;
+  }
+
+  try {
+    const { error } = await supabaseClient.rpc('leave_game_room', { p_code: codigo });
+    if (error) throw error;
+    await descartarCanalSalaSupabase();
+    voltarAoMenuDepoisDaSala('Você saiu da sala.');
+  } catch (e) {
+    console.error('[sair] erro ao encerrar participação:', e);
+    await descartarCanalSalaSupabase();
+    voltarAoMenuDepoisDaSala('Você saiu da sala, mas houve um erro: ' + e.message);
+  }
+}
+
+// A limpeza global da raiz /salas foi desativada: regras seguras não permitem
+// listar todas as salas. Salas expiradas são verificadas ao criar/entrar pelo código.
+
+// --- UI: criar ---
+function criarSalaUI() { mostrarPainel('painelCriar'); document.getElementById('inputCodigoCriar').focus(); }
+function entrarSalaUI() { mostrarPainel('painelEntrar'); document.getElementById('inputCodigoEntrar').focus(); }
+
+async function confirmarCriarSala() {
+    const msg = document.getElementById('msgCriar');
+    const codigo = normalizarCodigo(document.getElementById('inputCodigoCriar').value);
+
+    if (codigo.length !== 6) {
+        msg.innerText = 'O código precisa ter exatamente 6 caracteres.';
+        return;
+    }
+
+    msg.innerText = 'Criando sala...';
+    try {
+        await garantirAutenticacaoSupabase();
+        const { data, error } = await supabaseClient.rpc('create_game_room', { p_code: codigo });
+        if (error) throw error;
+
+        minhaSala.codigo = codigo;
+        minhaSala.papel = 'espectador';
+        document.getElementById('tela').hidden = true;
+        document.getElementById('telaSalas').hidden = false;
+        mostrarPainel('painelEspera');
+        document.getElementById('btnSairSalaAtiva').hidden = false;
+        msg.innerText = '';
+        entrarNaSala(codigo);
+        console.log('[Supabase] sala criada:', codigo, data);
+    } catch (e) {
+        console.error('[Supabase] erro ao criar sala:', e);
+        const texto = String(e.message || e);
+        msg.innerText = texto.includes('ROOM_EXISTS')
+            ? 'Já existe uma sala ativa com esse código. Escolha outro.'
+            : 'Erro ao criar sala: ' + texto;
+    }
+}
+
+async function confirmarEntrarSala() {
+  const msg = document.getElementById('msgEntrar');
+  const codigo = normalizarCodigo(document.getElementById('inputCodigoEntrar').value);
+  if (codigo.length !== 6) {
+    msg.innerText = 'Código inválido. Digite os 6 caracteres.';
+    return;
+  }
+
+  msg.innerText = 'Procurando sala...';
+  try {
+    await garantirAutenticacaoSupabase();
+    const { data, error } = await supabaseClient.rpc('join_game_room', { p_code: codigo });
+    if (error) throw error;
+    if (data && data.error === 'ROOM_EXPIRED') {
+      msg.innerText = 'Esta sala expirou por inatividade. Peça ao espectador para criar outra.';
+      return;
+    }
+    if (!data || !data.papel || !data.sala) throw new Error('Resposta inválida do Supabase ao entrar na sala.');
+
+    minhaSala.codigo = codigo;
+    minhaSala.papel = data.papel;
+    document.getElementById('tela').hidden = true;
+    document.getElementById('telaSalas').hidden = false;
+    mostrarPainel('painelEspera');
+    document.getElementById('btnSairSalaAtiva').hidden = false;
+    msg.innerText = '';
+    entrarNaSala(codigo);
+    console.log('[Supabase] entrada concluída:', { codigo, papel: data.papel, uid: minhaSala.uid });
+  } catch (e) {
+    console.error('[Supabase] erro ao entrar/reservar vaga:', e);
+    const texto = String(e.message || e);
+    if (texto.includes('ROOM_NOT_FOUND')) msg.innerText = 'Sala não encontrada. Confira o código.';
+    else if (texto.includes('ROOM_EXPIRED')) msg.innerText = 'Esta sala expirou por inatividade. Peça ao espectador para criar outra.';
+    else if (texto.includes('ROOM_FULL')) msg.innerText = 'Sala cheia: Jogador 1 e Jogador 2 já estão ocupados.';
+    else msg.innerText = 'Erro ao entrar: ' + texto;
+  }
+}
+
+function entrarNaSala(codigo) {
+  if (minhaSala.papel) {
+    configurarPresencaSala(codigo, minhaSala.papel);
+    document.getElementById('btnSairSalaAtiva').hidden = false;
+  }
+  if (unsubscribeSala) {
+    try { unsubscribeSala(); } catch (e) { console.warn('[entrarNaSala] erro ao cancelar escuta anterior:', e); }
+    unsubscribeSala = null;
+  }
+
+  const ref = database.ref(`${REF_SALAS}/${codigo}`);
+  const callback = (snap) => {
+    if (!snap || !snap.exists()) {
+      console.warn('[entrarNaSala] sala foi encerrada ou removida');
+      if (minhaSala.codigo === codigo) {
+        voltarAoMenuDepoisDaSala('A sala foi encerrada ou expirou.');
+      }
+      return;
+    }
+    try {
+      aoAtualizarSala(snap.val());
+    } catch (e) {
+      console.error('[entrarNaSala] erro em aoAtualizarSala:', e);
+    }
+  };
+
+  ref.on('value', callback, (err) => {
+    console.error('[entrarNaSala] erro na escuta:', err);
+  });
+
+  unsubscribeSala = () => ref.off('value', callback);
+}
+// Atualiza a interface conforme o estado da sala
+function liberarRolagemJogoOnline() {
+  // A tela inicial bloqueia a rolagem. No modo online ela é liberada
+  // quando o lobby fecha e os controles do jogo podem ficar abaixo da tela.
+  document.documentElement.style.height = 'auto';
+  document.documentElement.style.overflowX = 'hidden';
+  document.documentElement.style.overflowY = 'auto';
+  document.body.style.minHeight = '100vh';
+  document.body.style.overflowX = 'hidden';
+  document.body.style.overflowY = 'auto';
+}
+
+function aoAtualizarSala(sala) {
+  // Atualiza a lista de jogadores no painel de espera
+  const lista = document.getElementById('listaJogadores');
+  const p1 = sala.jogadores.p1, p2 = sala.jogadores.p2;
+  const eu = minhaSala.uid;
+  const nome = (uid, tag, cls) => uid
+    ? `<div class="jog"><span class="tag ${cls}">${tag}</span> ${uid === eu ? '(você)' : uid.slice(0,6)+'…'}</div>`
+    : '';
+  lista.innerHTML = (nome(sala.jogadores.espectador,'ESPECTADOR','tag-spec') +
+                     nome(p1,'JOGADOR 1','tag-p1') +
+                     nome(p2,'JOGADOR 2','tag-p2')) || 'Nenhum jogador ainda…';
+  document.getElementById('codigoExibido').innerText = minhaSala.codigo || '------';
+
+  // Todos os participantes voltam ao lobby quando a sala está esperando vagas.
+  if (sala.estado.fase === 'ESPERANDO') {
+    document.getElementById('tela').hidden = true;
+    document.getElementById('telaSalas').hidden = false;
+    mostrarPainel('painelEspera');
+    document.getElementById('btnSairSalaAtiva').hidden = true;
+    const titulo = document.querySelector('#painelEspera h3');
+    if (titulo) titulo.innerText = minhaSala.papel === 'espectador' ? 'Sala criada!' : 'Aguardando jogadores...';
+
+    // Quando os dois jogadores estão na sala, começa o posicionamento.
+    if (minhaSala.papel === 'p1' && sala.jogadores.p1 && sala.jogadores.p2) {
+      database.ref(`${REF_SALAS}/${minhaSala.codigo}/estado/fase`).set('POSICIONAMENTO')
+        .catch(e => console.warn('[sala] não foi possível iniciar posicionamento:', e));
+    }
+    return;
+  }
+
+  // Muda o jogo conforme a fase
+  if (sala.estado.fase !== 'ESPERANDO') {
+    liberarRolagemJogoOnline();
+    document.getElementById('telaSalas').hidden = true;
+    document.getElementById('btnSairSalaAtiva').hidden = false;
+    // A partir daqui, o jogo usa os dados compartilhados da sala
+    if (typeof sincronizarJogoComSala === 'function') sincronizarJogoComSala(sala);
+  }
+}
+</script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const larguraMundo = 2400;
+
+        let estadoJogo = 'POSICIONAMENTO'; // 'POSICIONAMENTO', 'BATALHA', 'TURNO_PAUSADO', 'ANIMACAO_AVIAO', 'FIM'
+        let turno = 1;
+
+        let basesJ1 = [];
+        let basesJ2 = [];
+
+        let tipoBarcoAtual = 'normal';
+
+        let splashes = [];
+        let barcosAfundando = [];
+        let animacaoAviao = null;
+        // Controle do ataque aéreo online: identifica o dono, evita disparos duplicados
+        // e distingue a animação local da cópia visual recebida pelo Supabase.
+        let idAtaqueAereoLocal = null;
+        let idAtaqueAereoRemoto = null;
+        let ataqueAereoReservando = false;
+        let sequenciaAtaqueAereoLocal = 0;
+        let ultimaPublicacaoAtaqueAereo = 0;
+        const INTERVALO_SYNC_ATAQUE_AEREO_MS = 100;
+        let ataqueAereoPendente = null;
+        let publicacaoAtaqueAereoEmAndamento = false;
+
+        // Buffer curto de interpolação para suavizar os snapshots recebidos.
+        let frameAtaqueRemotoAnterior = null;
+        let frameAtaqueRemotoAlvo = null;
+        let frameAtaqueRemotoRecebidoEm = 0;
+        let frameAtaqueRemotoDuracao = INTERVALO_SYNC_ATAQUE_AEREO_MS;
+        let ultimoSeqAtaqueAereoRemoto = -1;
+        let ultimoPacoteAtaqueAereoRemotoEm = 0;
+
+        let tempoOnda = 0;
+
+        let modoNublado = false;
+        let temporizadorNubladoIniciado = false;
+        const TEMPO_NUBLADO = 22500; // ms entre o início da fase final e a tempestade (as nuvens fecham o céu nesse tempo)
+        let inicioNublado = 0;
+        // Timestamp absoluto compartilhado para que todos os dispositivos iniciem a tempestade juntos.
+        let inicioNubladoEpoch = 0;
+        let timeoutInicioTempestade = null;
+        let musicaFimTocadaNaSala = false;
+        let musicaAberturaBatalhaTocada = false;
+        let musicaPendenteEspectador = null;
+        let avioesBloqueadosPorMauTempo = false;
+        let flashTrovaoAlpha = 0;
+        let raiosFundo = [];
+        let gotasChuva = [];
+
+        for (let i = 0; i < 200; i++) {
+            gotasChuva.push({
+                x: Math.random() * larguraMundo,
+                y: Math.random() * 400,
+                velocidadeY: 8 + Math.random() * 4,
+                velocidadeX: -2 - Math.random(),
+                comprimento: 10 + Math.random() * 6
+            });
+        }
+
+        let recargaHabilidadeJ1 = 0;
+        let recargaHabilidadeJ2 = 0;
+
+        let sinalInterrompidoJ1 = false;
+        let sinalInterrompidoJ2 = false;
+
+        // ===== Sincronização multiplayer =====
+        function multiplayerAtivo() {
+            return !!(minhaSala && minhaSala.codigo && minhaSala.papel);
+        }
+
+        function podeAgirOnline() {
+            if (!multiplayerAtivo()) return true; // preserva o modo local
+            if (minhaSala.papel === 'espectador') return false;
+            return minhaSala.papel === `p${turno}`;
+        }
+
+        function copiarAviaoParaMultiplayer() {
+            if (!animacaoAviao) return null;
+            const a = animacaoAviao;
+            return {
+                x: Number(a.x) || 0,
+                y: Number(a.y) || 0,
+                destinoX: Number(a.destinoX) || 0,
+                direcao: Number(a.direcao) || 1,
+                tipo: a.tipo || 'torpedeiro',
+                abatido: !!a.abatido,
+                caindo: !!a.caindo,
+                tempoPlanar: Number(a.tempoPlanar) || 0,
+                tempoParaquedas: Number(a.tempoParaquedas) || 0,
+                chamasQueda: Number(a.chamasQueda) || 0,
+                pilotosEjetados: !!a.pilotosEjetados,
+                angulo: Number(a.angulo) || 0,
+                rodas: !!a.rodas,
+                carga: !!a.carga
+            };
+        }
+
+        function copiarProjetilAereoParaMultiplayer() {
+            if (!projetilAereo) return null;
+            const p = projetilAereo;
+            return {
+                tipo: p.tipo || 'torpedo',
+                fase: p.fase || 'queda',
+                x: Number(p.x) || 0,
+                y: Number(p.y) || 0,
+                vx: Number(p.vx) || 0,
+                vy: Number(p.vy) || 0,
+                dir: Number(p.dir) || 1
+            };
+        }
+
+        function montarAtaqueAereoMultiplayer() {
+            if (!multiplayerAtivo() || minhaSala.papel === 'espectador' ||
+                estadoJogo !== 'ANIMACAO_AVIAO' || !idAtaqueAereoLocal) return null;
+            return {
+                id: idAtaqueAereoLocal,
+                dono: minhaSala.papel,
+                seq: sequenciaAtaqueAereoLocal,
+                ativa: !!animacaoAviao,
+                aviao: copiarAviaoParaMultiplayer(),
+                projetil: copiarProjetilAereoParaMultiplayer()
+            };
+        }
+
+        async function salvarEstadoMultiplayer() {
+            if (!multiplayerAtivo() || minhaSala.papel === 'espectador') return;
+            const ref = database.ref(`${REF_SALAS}/${minhaSala.codigo}`);
+            const mensagem = statusDiv.innerText || '';
+            const estado = {
+                fase: estadoJogo,
+                turno,
+                mensagem,
+                vencedor: estadoJogo === 'FIM' ? mensagem : null,
+                // Guarda o enquadramento: todos os jogadores veem o ponto de impacto
+                // até que o turno seja passado.
+                cameraX,
+                ataqueAereo: montarAtaqueAereoMultiplayer()
+            };
+            const jogador1 = {
+                barcos: basesJ1,
+                recarga: recargaHabilidadeJ1,
+                sinalInterrompido: sinalInterrompidoJ1
+            };
+            const jogador2 = {
+                barcos: basesJ2,
+                recarga: recargaHabilidadeJ2,
+                sinalInterrompido: sinalInterrompidoJ2
+            };
+            const clima = {
+                // Todos os clientes usam o mesmo horário de início das nuvens/tempestade.
+                inicioEm: temporizadorNubladoIniciado ? inicioNubladoEpoch : null
+            };
+            try {
+                await Promise.all([
+                    ref.child('estado').update(estado),
+                    ref.child('jogador1').update(jogador1),
+                    ref.child('jogador2').update(jogador2),
+                    ref.child('clima').update(clima),
+                    ref.child('ultimaAtividade').set(firebase.database.ServerValue.TIMESTAMP)
+                ]);
+            } catch (e) {
+                console.error('[multiplayer] falha ao sincronizar estado:', e);
+                statusDiv.innerText = 'Erro ao sincronizar com a sala: ' + e.message;
+            }
+        }
+
+        async function salvarBarcosOnline(numeroJogador) {
+            if (!multiplayerAtivo()) return;
+            const ref = database.ref(`${REF_SALAS}/${minhaSala.codigo}`);
+            const meuNumero = minhaSala.papel === 'p1' ? 1 : minhaSala.papel === 'p2' ? 2 : 0;
+            if (numeroJogador !== meuNumero) return;
+            const barcos = numeroJogador === 1 ? basesJ1 : basesJ2;
+            const caminho = numeroJogador === 1 ? 'jogador1/barcos' : 'jogador2/barcos';
+            try {
+                await Promise.all([
+                    ref.child(caminho).set(barcos),
+                    ref.child('ultimaAtividade').set(firebase.database.ServerValue.TIMESTAMP)
+                ]);
+                const snap = await ref.once('value');
+                const sala = snap.val() || {};
+                const j1 = sala.jogador1 && sala.jogador1.barcos || [];
+                const j2 = sala.jogador2 && sala.jogador2.barcos || [];
+                if (j1.length === 6 && j2.length === 6 && sala.estado && sala.estado.fase === 'POSICIONAMENTO') {
+                    await ref.child('estado').update({
+                        fase: 'BATALHA',
+                        turno: 1,
+                        mensagem: 'Os dois jogadores posicionaram seus barcos! Vez do Jogador 1.'
+                    });
+                }
+            } catch (e) {
+                console.error('[multiplayer] falha ao salvar barcos:', e);
+                statusDiv.innerText = 'Erro ao salvar seus barcos: ' + e.message;
+            }
+        }
+
+        function atualizarPermissoesOnline() {
+            if (!multiplayerAtivo()) return;
+            const espectador = minhaSala.papel === 'espectador';
+            if (estadoJogo === 'POSICIONAMENTO') {
+                const meusBarcos = minhaSala.papel === 'p1' ? basesJ1 : basesJ2;
+                menuSelecao.style.display = (!espectador && meusBarcos.length < 6) ? 'inline-block' : 'none';
+                controlsDiv.style.display = 'none';
+            } else {
+                menuSelecao.style.display = 'none';
+                const eMinhaVez = estadoJogo === 'BATALHA' && !espectador && minhaSala.papel === `p${turno}`;
+                controlsDiv.style.display = eMinhaVez ? 'inline-block' : 'none';
+                btnDisparar.disabled = !eMinhaVez || !!bala;
+            }
+            if (espectador) {
+                btnDisparar.disabled = true;
+                btnRadarEspecial.disabled = true;
+                btnAviaoEspecial.disabled = true;
+                btnBombardeiroEspecial.disabled = true;
+            }
+            atualizarControlesCameraEspectador();
+        }
+
+        function sincronizarAfundamentosRecebidos(anteriores, atuais) {
+            if (!Array.isArray(anteriores) || !Array.isArray(atuais)) return;
+
+            for (let i = 0; i < Math.min(anteriores.length, atuais.length); i++) {
+                const anterior = anteriores[i];
+                const atual = atuais[i];
+                if (!anterior || !atual || !anterior.viva || atual.viva) continue;
+
+                const chave = `${atual.tipo || 'normal'}:${atual.x}:${atual.y}`;
+                if (barcosAfundando.some(b => b._chaveMultiplayer === chave)) continue;
+
+                // Reproduz no cliente remoto a explosão e a animação do casco afundando.
+                explodirBarco(anterior, atual.x, atual.y - 6, true);
+                barcosAfundando.push({
+                    ...atual,
+                    _chaveMultiplayer: chave,
+                    angulo: 0,
+                    alpha: 1.0,
+                    timer: 0,
+                    tipo: atual.tipo
+                });
+            }
+        }
+
+        function sincronizarDanosRecebidos(anteriores, atuais) {
+            if (!Array.isArray(anteriores) || !Array.isArray(atuais)) return;
+            for (let i = 0; i < Math.min(anteriores.length, atuais.length); i++) {
+                const anterior = anteriores[i];
+                const atual = atuais[i];
+                if (!anterior || !atual || !anterior.viva || !atual.viva) continue;
+                if (Number(atual.vidas) < Number(anterior.vidas)) {
+                    explodirBarco(atual, atual.x, atual.y - 6, false);
+                    splashes.push({ x: atual.x, y: atual.y, raio: 15, alpha: 0.9 });
+                }
+            }
+        }
+
+        function copiarSnapshotAtaqueAereo(ataque) {
+            return {
+                aviao: ataque && ataque.aviao ? { ...ataque.aviao } : null,
+                projetil: ataque && ataque.projetil ? { ...ataque.projetil } : null
+            };
+        }
+
+        function sincronizarAtaqueAereoRecebido(estadoSala) {
+            const ataque = estadoSala && estadoSala.ataqueAereo;
+            const ehDoMeuDispositivo = ataque && ataque.dono === minhaSala.papel;
+
+            if (ataque && ataque.ativa && !ehDoMeuDispositivo) {
+                const novoId = String(ataque.id || 'ataque-aereo-remoto');
+                const seq = Number(ataque.seq || 0);
+                const agora = performance.now();
+                const novoSnapshot = copiarSnapshotAtaqueAereo(ataque);
+
+                if (novoId !== idAtaqueAereoRemoto) {
+                    idAtaqueAereoRemoto = novoId;
+                    ultimoSeqAtaqueAereoRemoto = seq;
+                    ultimoPacoteAtaqueAereoRemotoEm = agora;
+                    frameAtaqueRemotoAnterior = novoSnapshot;
+                    frameAtaqueRemotoAlvo = novoSnapshot;
+                    frameAtaqueRemotoRecebidoEm = agora;
+                    frameAtaqueRemotoDuracao = INTERVALO_SYNC_ATAQUE_AEREO_MS;
+                    animacaoAviao = novoSnapshot.aviao ? { ...novoSnapshot.aviao } : null;
+                    projetilAereo = novoSnapshot.projetil ? { ...novoSnapshot.projetil } : null;
+                    return;
+                }
+
+                // O listener da sala também dispara por mudanças em outros dados.
+                // Ignora snapshots de voo repetidos para não reiniciar a interpolação.
+                if (seq <= ultimoSeqAtaqueAereoRemoto) return;
+
+                frameAtaqueRemotoAnterior = {
+                    aviao: animacaoAviao ? { ...animacaoAviao } : null,
+                    projetil: projetilAereo ? { ...projetilAereo } : null
+                };
+                frameAtaqueRemotoAlvo = novoSnapshot;
+                frameAtaqueRemotoRecebidoEm = agora;
+                frameAtaqueRemotoDuracao = Math.max(70, Math.min(180,
+                    ultimoPacoteAtaqueAereoRemotoEm
+                        ? agora - ultimoPacoteAtaqueAereoRemotoEm
+                        : INTERVALO_SYNC_ATAQUE_AEREO_MS
+                ));
+                ultimoPacoteAtaqueAereoRemotoEm = agora;
+                ultimoSeqAtaqueAereoRemoto = seq;
+                return;
+            }
+
+            // O dono mantém a simulação local. Os outros limpam a cópia visual
+            // quando o ataque termina ou um novo estado substitui a animação.
+            if (idAtaqueAereoRemoto && (!ataque || !ataque.ativa ||
+                String(ataque.id || '') !== idAtaqueAereoRemoto || ehDoMeuDispositivo)) {
+                idAtaqueAereoRemoto = null;
+                ultimoSeqAtaqueAereoRemoto = -1;
+                frameAtaqueRemotoAnterior = null;
+                frameAtaqueRemotoAlvo = null;
+                animacaoAviao = null;
+                projetilAereo = null;
+            }
+        }
+
+        function interpolarValor(a, b, t) {
+            const na = Number(a), nb = Number(b);
+            if (Number.isFinite(na) && Number.isFinite(nb)) return na + (nb - na) * t;
+            return b;
+        }
+
+        function interpolarObjetoAtaque(anterior, alvo, t, chavesNumericas) {
+            if (!alvo) return null;
+            if (!anterior) return { ...alvo };
+            const saida = { ...alvo };
+            for (const chave of chavesNumericas) {
+                if (anterior[chave] !== undefined && alvo[chave] !== undefined) {
+                    saida[chave] = interpolarValor(anterior[chave], alvo[chave], t);
+                }
+            }
+            return saida;
+        }
+
+        function atualizarAtaqueAereoRemoto() {
+            if (!idAtaqueAereoRemoto || !frameAtaqueRemotoAlvo) return;
+            const agora = performance.now();
+            const t = Math.max(0, Math.min(1,
+                (agora - frameAtaqueRemotoRecebidoEm) / Math.max(1, frameAtaqueRemotoDuracao)
+            ));
+            const anterior = frameAtaqueRemotoAnterior || {};
+            const alvo = frameAtaqueRemotoAlvo;
+
+            animacaoAviao = interpolarObjetoAtaque(
+                anterior.aviao, alvo.aviao, t,
+                ['x', 'y', 'destinoX', 'tempoPlanar', 'tempoParaquedas', 'chamasQueda', 'angulo']
+            );
+            projetilAereo = interpolarObjetoAtaque(
+                anterior.projetil, alvo.projetil, t,
+                ['x', 'y', 'vx', 'vy']
+            );
+
+            // Cada jogador segue localmente o avião interpolado. O espectador
+            // continua livre para manter a própria câmera.
+            if (!ehEspectadorOnline() && animacaoAviao) {
+                const foco = projetilAereo ? projetilAereo.x : animacaoAviao.x;
+                const alvoCamera = limitarCameraX(foco - 400);
+                cameraX += (alvoCamera - cameraX) * 0.18;
+            }
+        }
+
+        function sincronizarClimaComSala(clima) {
+            const inicio = Number(clima && clima.inicioEm || 0);
+            if (inicio > 0 && inicio !== inicioNubladoEpoch) {
+                iniciarTemporizadorNublado(inicio);
+            }
+        }
+
+        function sincronizarJogoComSala(sala) {
+            if (!multiplayerAtivo() || !sala) return;
+            const faseAnterior = estadoJogo;
+            const dados1 = sala.jogador1 || {};
+            const dados2 = sala.jogador2 || {};
+            const barcosAnterioresJ1 = basesJ1;
+            const barcosAnterioresJ2 = basesJ2;
+            const barcosAtuaisJ1 = Array.isArray(dados1.barcos) ? dados1.barcos : [];
+            const barcosAtuaisJ2 = Array.isArray(dados2.barcos) ? dados2.barcos : [];
+
+            // Reproduz impactos e afundamentos também nos outros participantes.
+            sincronizarDanosRecebidos(barcosAnterioresJ1, barcosAtuaisJ1);
+            sincronizarDanosRecebidos(barcosAnterioresJ2, barcosAtuaisJ2);
+            sincronizarAfundamentosRecebidos(barcosAnterioresJ1, barcosAtuaisJ1);
+            sincronizarAfundamentosRecebidos(barcosAnterioresJ2, barcosAtuaisJ2);
+            basesJ1 = barcosAtuaisJ1;
+            basesJ2 = barcosAtuaisJ2;
+            recargaHabilidadeJ1 = Number(dados1.recarga || 0);
+            recargaHabilidadeJ2 = Number(dados2.recarga || 0);
+            sinalInterrompidoJ1 = !!dados1.sinalInterrompido;
+            sinalInterrompidoJ2 = !!dados2.sinalInterrompido;
+
+            if (sala.estado && sala.estado.fase) estadoJogo = sala.estado.fase;
+            if (sala.estado && sala.estado.turno) turno = Number(sala.estado.turno);
+            if (sala.estado && sala.estado.mensagem) statusDiv.innerText = sala.estado.mensagem;
+
+            // No online, a mudança para BATALHA só ocorre depois que P1 e P2
+            // salvaram seus seis barcos. A música é disparada uma única vez por cliente.
+            if (faseAnterior !== 'BATALHA' && estadoJogo === 'BATALHA') {
+                tocarMusicaAberturaBatalhaUmaVez();
+            }
+
+            // Recebe apenas a representação visual da bala. A física e o acerto
+            // continuam sendo calculados uma única vez, no dispositivo do atirador.
+            const proj = sala.estado && sala.estado.bala;
+            if (proj && proj.ativa && proj.dono !== minhaSala.papel &&
+                Number.isFinite(Number(proj.x)) && Number.isFinite(Number(proj.y))) {
+                const novoId = String(proj.id || `${proj.dono}_${proj.x}_${proj.y}`);
+                if (novoId !== idBalaRemota) {
+                    idBalaRemota = novoId;
+                    rastroBalaRemota = [];
+                }
+                balaRemota = { x: Number(proj.x), y: Number(proj.y) };
+            } else {
+                balaRemota = null;
+                idBalaRemota = null;
+                rastroBalaRemota = [];
+            }
+
+            // Avião, piloto abatido e bomba/torpedo são somente visuais nos clientes
+            // remotos; apenas o dono calcula o voo e aplica o resultado do ataque.
+            sincronizarAtaqueAereoRecebido(sala.estado || {});
+
+            sincronizarClimaComSala(sala.clima || {});
+
+            if (minhaSala.papel !== 'espectador') {
+                // No multiplayer, os jogadores não ouvem as trilhas.
+                pausarTodasAsMusicas();
+            } else if (estadoJogo === 'FIM') {
+                musicaSecret.pause();
+                musicaDarkEnergy.pause();
+                if (!musicaFimTocadaNaSala) {
+                    musicaFimTocadaNaSala = true;
+                    tocarMusicaPermitida(musicaTriage, true);
+                }
+            } else {
+                musicaFimTocadaNaSala = false;
+            }
+
+            if (minhaSala.papel === 'espectador') {
+                // O espectador começa no meio e conserva seu enquadramento manual.
+                // Atualizações do Supabase não devem puxar sua câmera para um jogador.
+                if (!cameraEspectadorInicializada) {
+                    cameraX = limitarCameraX((larguraMundo - canvas.width) / 2);
+                    cameraEspectadorInicializada = true;
+                }
+                if (estadoJogo === 'POSICIONAMENTO') {
+                    statusDiv.innerText = `Assistindo: P1 posicionou ${basesJ1.length}/6 barcos; P2 posicionou ${basesJ2.length}/6 barcos.`;
+                }
+            } else if (estadoJogo === 'POSICIONAMENTO') {
+                cameraX = minhaSala.papel === 'p2' ? 1600 : 0;
+                const meusBarcos = minhaSala.papel === 'p1' ? basesJ1 : basesJ2;
+                statusDiv.innerText = `Jogador ${minhaSala.papel === 'p1' ? 1 : 2}: posicione seus barcos (${meusBarcos.length}/6).`;
+            } else if (sala.estado && typeof sala.estado.cameraX === 'number' && Number.isFinite(sala.estado.cameraX)) {
+                // Não deixa uma confirmação atrasada do Supabase puxar a câmera do
+                // próprio atirador para trás enquanto ele acompanha o projétil localmente.
+                const cameraControladaPeloAtirador =
+                    minhaSala.papel === `p${turno}` &&
+                    (!!bala || (estadoJogo === 'ANIMACAO_AVIAO' && !!animacaoAviao));
+                const ataqueRemotoAtivo = sala.estado.ataqueAereo &&
+                    sala.estado.ataqueAereo.ativa &&
+                    sala.estado.ataqueAereo.dono !== minhaSala.papel &&
+                    estadoJogo === 'ANIMACAO_AVIAO';
+
+                // Durante um voo remoto, a câmera acompanha a cópia interpolada em
+                // cada frame. Fora do voo, aplica a câmera compartilhada normal.
+                if (!cameraControladaPeloAtirador && !ataqueRemotoAtivo) {
+                    cameraX = limitarCameraX(sala.estado.cameraX);
+                }
+            } else {
+                // Compatibilidade com salas antigas sem estado.cameraX.
+                cameraX = turno === 1 ? 0 : 1600;
+            }
+
+            atualizarBotoesHabilidades();
+            atualizarPermissoesOnline();
+            desenharCenario();
+        }
+
+        const navioCanhaoJ1 = { x: 80, y: 310 };
+        const navioCanhaoJ2 = { x: 2320, y: 310 };
+
+        let cameraX = 0;
+        let bala = null; // projétil físico: somente o jogador da vez simula a trajetória
+        let balaRemota = null; // cópia visual recebida do Supabase; nunca participa da física
+        let idBalaRemota = null;
+        let rastroBalaRemota = [];
+
+        // Sincroniza a posição da câmera e o projétil durante o disparo para que
+        // os outros participantes também vejam a bala em movimento.
+        // acompanhem a trajetória. O espectador nunca recebe essas mudanças na própria câmera.
+        let ultimaSincronizacaoCamera = 0;
+        const INTERVALO_SYNC_CAMERA_MS = 75;
+        // Serializa as publicações para uma atualização antiga não reaparecer
+        // depois que a bala já tiver sido removida no impacto.
+        let promessaPublicacaoTrajetoria = Promise.resolve();
+        let publicacaoTrajetoriaEmAndamento = false;
+        let dadosTrajetoriaPendentes = null;
+
+        function publicarCameraMultiplayer(forcar = false) {
+            if (!multiplayerAtivo() || minhaSala.papel === 'espectador') return Promise.resolve();
+
+            const agora = performance.now();
+            const intervaloAtual = estadoJogo === 'ANIMACAO_AVIAO' ? 120 : INTERVALO_SYNC_CAMERA_MS;
+            if (!forcar && agora - ultimaSincronizacaoCamera < intervaloAtual) return promessaPublicacaoTrajetoria;
+            ultimaSincronizacaoCamera = agora;
+
+            const dadosEstado = {
+                cameraX: limitarCameraX(cameraX),
+                bala: bala ? {
+                    ativa: true,
+                    id: bala.id || `${minhaSala.uid}_${agora}`,
+                    dono: minhaSala.papel,
+                    x: Number(bala.x),
+                    y: Number(bala.y)
+                } : null,
+                ataqueAereo: montarAtaqueAereoMultiplayer()
+            };
+
+            const estadoRef = database.ref(`${REF_SALAS}/${minhaSala.codigo}/estado`);
+            // Guarda somente o snapshot mais recente enquanto há uma gravação em curso.
+            dadosTrajetoriaPendentes = { ref: estadoRef, dados: dadosEstado };
+            if (!publicacaoTrajetoriaEmAndamento) {
+                publicacaoTrajetoriaEmAndamento = true;
+                promessaPublicacaoTrajetoria = (async () => {
+                    try {
+                        while (dadosTrajetoriaPendentes) {
+                            const item = dadosTrajetoriaPendentes;
+                            dadosTrajetoriaPendentes = null;
+                            await item.ref.update(item.dados);
+                        }
+                    } catch (e) {
+                        console.warn('[trajetória] não foi possível sincronizar:', e);
+                    } finally {
+                        publicacaoTrajetoriaEmAndamento = false;
+                    }
+                })();
+            }
+            return promessaPublicacaoTrajetoria;
+        }
+
+        function publicarAtaqueAereoMultiplayer(forcar = false) {
+            if (!multiplayerAtivo() || minhaSala.papel === 'espectador' || !idAtaqueAereoLocal) return;
+            const agora = performance.now();
+            if (!forcar && agora - ultimaPublicacaoAtaqueAereo < INTERVALO_SYNC_ATAQUE_AEREO_MS) return;
+            ultimaPublicacaoAtaqueAereo = agora;
+            sequenciaAtaqueAereoLocal++;
+
+            const pacote = montarAtaqueAereoMultiplayer();
+            if (!pacote) return;
+            pacote.seq = sequenciaAtaqueAereoLocal;
+            pacote.enviadoEm = Date.now();
+            ataqueAereoPendente = pacote;
+
+            // Escritas lentas não acumulam posições antigas: o snapshot pendente
+            // é substituído pelo mais recente até a próxima gravação.
+            if (publicacaoAtaqueAereoEmAndamento) return;
+            publicacaoAtaqueAereoEmAndamento = true;
+            const ref = database.ref(`${REF_SALAS}/${minhaSala.codigo}/estado/ataqueAereo`);
+            (async () => {
+                try {
+                    while (ataqueAereoPendente) {
+                        const atual = ataqueAereoPendente;
+                        ataqueAereoPendente = null;
+                        await ref.set(atual);
+                    }
+                } catch (e) {
+                    console.warn('[ataque aéreo] não foi possível enviar o snapshot:', e);
+                } finally {
+                    publicacaoAtaqueAereoEmAndamento = false;
+                }
+            })();
+        }
+
+        // Câmera particular do espectador: livre, arrastável e sem sincronização
+        // com os turnos dos jogadores.
+        let cameraEspectadorInicializada = false;
+        let arrastandoCameraEspectador = false;
+        let inicioArrastoEspectadorX = 0;
+        let cameraInicioArrastoEspectadorX = 0;
+
+        function limitarCameraX(valor) {
+            return Math.max(0, Math.min(larguraMundo - canvas.width, Number(valor) || 0));
+        }
+
+        function ehEspectadorOnline() {
+            return multiplayerAtivo() && minhaSala.papel === 'espectador';
+        }
+
+        function atualizarControlesCameraEspectador() {
+            const painel = document.getElementById('controlesCameraEspectador');
+            const slider = document.getElementById('cameraEspectador');
+            const ativo = ehEspectadorOnline();
+            if (painel) painel.hidden = !ativo;
+            canvas.style.cursor = ativo ? (arrastandoCameraEspectador ? 'grabbing' : 'grab') : 'crosshair';
+            canvas.style.touchAction = ativo ? 'none' : '';
+            if (slider && ativo) slider.value = String(Math.round(cameraX));
+        }
+
+        canvas.addEventListener('pointerdown', (e) => {
+            if (!ehEspectadorOnline() || e.button !== 0) return;
+            arrastandoCameraEspectador = true;
+            inicioArrastoEspectadorX = e.clientX;
+            cameraInicioArrastoEspectadorX = cameraX;
+            atualizarControlesCameraEspectador();
+            try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+            e.preventDefault();
+        });
+
+        canvas.addEventListener('pointermove', (e) => {
+            if (!arrastandoCameraEspectador || !ehEspectadorOnline()) return;
+            const rect = canvas.getBoundingClientRect();
+            const escala = canvas.width / Math.max(1, rect.width);
+            const deslocamento = (e.clientX - inicioArrastoEspectadorX) * escala;
+            cameraX = limitarCameraX(cameraInicioArrastoEspectadorX - deslocamento);
+            const slider = document.getElementById('cameraEspectador');
+            if (slider) slider.value = String(Math.round(cameraX));
+            desenharCenario();
+            e.preventDefault();
+        });
+
+        function finalizarArrastoCameraEspectador(e) {
+            if (!arrastandoCameraEspectador) return;
+            arrastandoCameraEspectador = false;
+            atualizarControlesCameraEspectador();
+            if (e && e.pointerId !== undefined) {
+                try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+            }
+        }
+        canvas.addEventListener('pointerup', finalizarArrastoCameraEspectador);
+        canvas.addEventListener('pointercancel', finalizarArrastoCameraEspectador);
+
+        const sliderCameraEspectador = document.getElementById('cameraEspectador');
+        if (sliderCameraEspectador) {
+            sliderCameraEspectador.addEventListener('input', () => {
+                if (!ehEspectadorOnline()) return;
+                cameraX = limitarCameraX(sliderCameraEspectador.value);
+                desenharCenario();
+            });
+        }
+
+        const inputAngulo = document.getElementById('inputAngulo');
+        const inputForca = document.getElementById('inputForca');
+        const valorAngulo = document.getElementById('valorAngulo');
+        const valorForca = document.getElementById('valorForca');
+        const statusDiv = document.getElementById('status');
+        const btnDisparar = document.getElementById('btnDisparar');
+        const btnRadarEspecial = document.getElementById('btnRadarEspecial');
+        const btnAviaoEspecial = document.getElementById('btnAviaoEspecial');
+        const btnBombardeiroEspecial = document.getElementById('btnBombardeiroEspecial');
+        const controlsDiv = document.getElementById('controls');
+        const menuSelecao = document.getElementById('menuSelecao');
+        
+        const musicaSecret = document.getElementById('musicaSecret');
+        const musicaDarkEnergy = document.getElementById('musicaDarkEnergy');
+        const musicaTriage = document.getElementById('musicaTriage');
+        const musicaAberturaBatalha = document.getElementById('musicaAberturaBatalha');
+        const btnAtivarAudioEspectador = document.getElementById('btnAtivarAudioEspectador');
+
+        function podeTocarMusica() {
+            // No modo local o áudio continua normal. Online, somente o espectador ouve.
+            return !multiplayerAtivo() || minhaSala.papel === 'espectador';
+        }
+
+        function pausarTodasAsMusicas() {
+            [musicaSecret, musicaDarkEnergy, musicaTriage, musicaAberturaBatalha].forEach(audio => {
+                audio.pause();
+            });
+        }
+
+        function tocarMusicaAberturaBatalhaUmaVez() {
+            if (musicaAberturaBatalhaTocada) return;
+            musicaAberturaBatalhaTocada = true;
+
+            // No modo local os dois jogadores ouvem normalmente.
+            // No online, mantém a regra já definida: somente o espectador ouve música.
+            if (podeTocarMusica()) {
+                tocarMusicaPermitida(musicaAberturaBatalha, true);
+            } else {
+                musicaAberturaBatalha.pause();
+            }
+        }
+
+        function tocarMusicaPermitida(audio, reiniciar = false) {
+            if (!audio) return;
+            if (!podeTocarMusica()) {
+                audio.pause();
+                return;
+            }
+
+            musicaPendenteEspectador = audio;
+            if (reiniciar) audio.currentTime = 0;
+
+            const promessa = audio.play();
+            if (promessa && typeof promessa.then === 'function') {
+                promessa.then(() => {
+                    if (btnAtivarAudioEspectador) btnAtivarAudioEspectador.hidden = true;
+                }).catch(() => {
+                    // Navegadores podem bloquear áudio iniciado por atualização do Supabase.
+                    if (ehEspectadorOnline() && btnAtivarAudioEspectador) {
+                        btnAtivarAudioEspectador.hidden = false;
+                    }
+                });
+            }
+        }
+
+        function habilitarAudioEspectador() {
+            if (!ehEspectadorOnline()) return;
+            const audio = musicaPendenteEspectador ||
+                (temporizadorNubladoIniciado && estadoJogo !== 'FIM' ? musicaSecret :
+                 estadoJogo === 'FIM' ? musicaTriage : null);
+            if (audio) tocarMusicaPermitida(audio, false);
+        }
+
+        function iniciarMusicaDeSuspense() {
+            if (!podeTocarMusica() || estadoJogo === 'FIM') return;
+            if (musicaSecret.paused && musicaDarkEnergy.paused) {
+                tocarMusicaPermitida(musicaSecret, true);
+            }
+        }
+
+        // Loop alternado entre Secret e Dark Energy durante a fase final.
+        musicaSecret.onended = () => {
+            if (podeTocarMusica() && temporizadorNubladoIniciado && estadoJogo !== 'FIM') {
+                tocarMusicaPermitida(musicaDarkEnergy, true);
+            }
+        };
+
+        musicaDarkEnergy.onended = () => {
+            if (podeTocarMusica() && temporizadorNubladoIniciado && estadoJogo !== 'FIM') {
+                tocarMusicaPermitida(musicaSecret, true);
+            }
+        };
+
+        const btnNormal = document.getElementById('btnNormal');
+        const btnRapido = document.getElementById('btnRapido');
+        const btnPesado = document.getElementById('btnPesado');
+        const btnSub = document.getElementById('btnSub');
+        const btnCarrier = document.getElementById('btnCarrier');
+        const btnDestroyer = document.getElementById('btnDestroyer');
+        const btnRadar = document.getElementById('btnRadar');
+
+        inputAngulo.addEventListener('input', () => {
+            valorAngulo.innerText = inputAngulo.value;
+            desenharCenario();
+        });
+        inputForca.addEventListener('input', () => {
+            valorForca.innerText = inputForca.value;
+            desenharCenario();
+        });
+
+        function dispararClaraoEfetivo() {
+            if (modoNublado || estadoJogo === 'FIM') return;
+            modoNublado = true;
+            avioesBloqueadosPorMauTempo = true;
+            document.body.classList.add('tempestade');
+            flashTrovaoAlpha = 1.0;
+
+            gerarRaioFundo();
+            setTimeout(gerarRaioFundo, 400);
+            agendarRaios();
+
+            atualizarBotoesHabilidades();
+        }
+
+        function iniciarTemporizadorNublado(inicioEpoch) {
+            const inicio = Number(inicioEpoch) || Date.now();
+            if (temporizadorNubladoIniciado && inicio === inicioNubladoEpoch) return;
+
+            temporizadorNubladoIniciado = true;
+            inicioNubladoEpoch = inicio;
+            const decorrido = Math.max(0, Date.now() - inicioNubladoEpoch);
+            inicioNublado = performance.now() - decorrido;
+
+            if (timeoutInicioTempestade) clearTimeout(timeoutInicioTempestade);
+
+            // Ao entrar na fase nublada, interrompe a música de abertura.
+            // O espectador (ou os dois jogadores no modo local) passa para a trilha de suspense.
+            if (musicaAberturaBatalha) {
+                musicaAberturaBatalha.pause();
+                musicaAberturaBatalha.currentTime = 0;
+            }
+            musicaPendenteEspectador = musicaSecret;
+            iniciarMusicaDeSuspense();
+
+            const restante = Math.max(0, TEMPO_NUBLADO - decorrido);
+            timeoutInicioTempestade = setTimeout(() => {
+                dispararClaraoEfetivo();
+            }, restante);
+        }
+
+        // ================= TEMPESTADE: nuvens fechando o céu, raios e ondas =================
+        // O timestamp absoluto vindo do Supabase mantém a evolução das nuvens alinhada entre dispositivos.
+        function progressoNuvens() {
+            if (modoNublado) return 1;
+            if (!temporizadorNubladoIniciado) return 0;
+            const decorrido = inicioNubladoEpoch
+                ? Math.max(0, Date.now() - inicioNubladoEpoch)
+                : Math.max(0, performance.now() - inicioNublado);
+            return Math.min(1, decorrido / TEMPO_NUBLADO);
+        }
+
+        // clarão do último raio (dois estalos); a camada 3D usa para iluminar a cena e projetar a sombra dos barcos
+        let luzRaio = { t0: -1e9, x: 0, forca: 0 };
+        function intensidadeRaio() {
+            const e = performance.now() - luzRaio.t0;
+            if (e < 0 || e > 900) return 0;
+            const pulso = (t0, tau) => { const u = e - t0; return u < 0 ? 0 : (u < 30 ? u / 30 : Math.exp(-(u - 30) / tau)); };
+            return luzRaio.forca * Math.max(pulso(0, 150), 0.75 * pulso(170, 230));
+        }
+
+        function gerarRaioFundo(xAlvo) {
+            const x0 = typeof xAlvo === 'number' ? xAlvo : cameraX + rand(60, 740);
+            const pontos = [{ x: x0, y: 0 }];
+            let cx = x0, cy = 0;
+            while (cy < 255) { cx += rand(-22, 22); cy += rand(14, 30); pontos.push({ x: cx, y: Math.min(cy, 262) }); }
+            const ramos = [];
+            for (let n = 0; n < 2; n++) {
+                const o = pontos[Math.floor(rand(2, pontos.length - 2))], sentido = Math.random() < 0.5 ? -1 : 1;
+                const ramo = [{ x: o.x, y: o.y }];
+                for (let j = 0; j < 4; j++) ramo.push({ x: ramo[j].x + sentido * rand(8, 22), y: ramo[j].y + rand(10, 22) });
+                ramos.push(ramo);
+            }
+            raiosFundo.push({ pontos, ramos, t0: performance.now() });
+            luzRaio = { t0: performance.now(), x: cx, forca: 1 };
+        }
+
+        function desenharRaios() {
+            const agora = performance.now(), iR = intensidadeRaio();
+            if (iR > 0.01) { // clarão no céu
+                const g = ctx.createLinearGradient(0, 0, 0, 285);
+                g.addColorStop(0, `rgba(205,220,255,${0.5 * iR})`); g.addColorStop(1, `rgba(205,220,255,${0.18 * iR})`);
+                ctx.fillStyle = g; ctx.fillRect(cameraX, 0, canvas.width, 285);
+            }
+            const traco = pts => { ctx.beginPath(); pts.forEach((p, j) => j ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.stroke(); };
+            for (let i = raiosFundo.length - 1; i >= 0; i--) {
+                const r = raiosFundo[i], e = agora - r.t0;
+                if (e > 600) { raiosFundo.splice(i, 1); continue; }
+                const a = e < 70 ? 1 : (e < 130 ? 0.35 : (e < 210 ? 0.95 : Math.max(0, 1 - (e - 210) / 390)));
+                ctx.save();
+                ctx.globalAlpha = a; ctx.lineJoin = 'round';
+                [r.pontos, ...r.ramos].forEach((pts, k) => {
+                    ctx.shadowColor = 'rgba(170,200,255,1)'; ctx.shadowBlur = 16;
+                    ctx.strokeStyle = 'rgba(190,215,255,0.9)'; ctx.lineWidth = k ? 1.6 : 3.6; traco(pts);
+                    ctx.shadowBlur = 0; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = k ? 0.7 : 1.4; traco(pts);
+                });
+                ctx.restore();
+            }
+        }
+
+        // raios aleatórios ao fundo enquanto a tempestade durar
+        function agendarRaios() {
+            setTimeout(() => {
+                if (estadoJogo === 'FIM') return;
+                gerarRaioFundo();
+                if (Math.random() < 0.35) setTimeout(() => gerarRaioFundo(), rand(150, 300));
+                agendarRaios();
+            }, rand(1800, 5200));
+        }
+
+        // ondas de impacto: anéis que se espalham pela água e balançam os barcos em volta
+        let ondasImpacto = [];
+        function criarOnda(x, amp) {
+            ondasImpacto.push({ x, amp, t0: performance.now(), dur: 2800 });
+            if (ondasImpacto.length > 14) ondasImpacto.shift();
+        }
+        function alturaOndasImpacto(x, z) {
+            if (!ondasImpacto.length) return 0;
+            const agora = performance.now();
+            let h = 0;
+            for (let i = ondasImpacto.length - 1; i >= 0; i--) {
+                const o = ondasImpacto[i], idade = agora - o.t0;
+                if (idade > o.dur) { ondasImpacto.splice(i, 1); continue; }
+                const d = Math.hypot(x - o.x, z), r = 0.17 * idade;
+                h += o.amp * (1 - idade / o.dur) * Math.exp(-((d - r) * (d - r)) / 9800) * Math.cos((d - r) * 0.055) / (1 + d * 0.004);
+            }
+            return h;
+        }
+
+        // cada tipo de barco explode de um jeito e levanta uma onda de tamanho diferente
+        const PERFIL_EXPLOSAO = {
+            normal:    { esc: 1.0, extra: 'estilhaco', onda: 6 },   // madeira em pedaços
+            rapido:    { esc: 1.2, extra: 'faisca',    onda: 5 },   // explosão seca com muitas faíscas
+            pesado:    { esc: 1.4, extra: 'fumaca',    onda: 8 },   // bola de fogo com fumaça preta
+            submarino: { esc: 0.8, extra: 'coluna',    onda: 6 },   // colunas d'água
+            carrier:   { esc: 1.7, extra: 'cadeia',    onda: 10 },  // explosões em cadeia, onda enorme
+            destroyer: { esc: 1.5, extra: 'cadeia',    onda: 9 },
+            radar:     { esc: 1.0, extra: 'eletrica',  onda: 6 }    // faíscas elétricas azuis
+        };
+        function explodirBarco(alvo, x, y, destruido) {
+            const pf = PERFIL_EXPLOSAO[alvo.tipo] || PERFIL_EXPLOSAO.normal, k = destruido ? 1.5 : 1;
+            criarExplosao(x, y, pf.esc * k);
+            if (pf.extra === 'estilhaco') {
+                for (let i = 0; i < 12 * k; i++) {
+                    const a = rand(Math.PI * 1.1, Math.PI * 1.9), v = rand(2, 6);
+                    particulas.push({ tipo: 'estilhaco', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, vida: 0, max: rand(40, 70), tam: rand(4, 9), rot: rand(-1, 1), cor: Math.random() < 0.5 ? '#8b5a2b' : '#e8d9b5' });
+                }
+            } else if (pf.extra === 'faisca' || pf.extra === 'eletrica') {
+                for (let i = 0; i < 18 * k; i++) {
+                    const a = rand(0, Math.PI * 2), v = rand(3, 8);
+                    particulas.push({ tipo: 'faisca', azul: pf.extra === 'eletrica', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 2, vida: 0, max: rand(25, 45), tam: 2 });
+                }
+            } else if (pf.extra === 'fumaca') {
+                for (let i = 0; i < 14 * k; i++) emitirFumaca(x + rand(-18, 18), y + rand(-10, 6));
+            } else if (pf.extra === 'coluna') {
+                for (let i = 0; i < 3; i++) setTimeout(() => criarGotas(alvo.x + rand(-10, 10), 330), i * 90);
+            } else if (pf.extra === 'cadeia') {
+                for (let i = 1; i <= 2; i++) setTimeout(() => criarExplosao(alvo.x + rand(-35, 35), y + rand(-4, 8), 0.8 * k), 140 * i);
+            }
+            criarOnda(alvo.x, pf.onda * k);
+            if (destruido) setTimeout(() => criarOnda(alvo.x, pf.onda * 0.8), 650); // a água se fecha sobre o casco
+        }
+
+        function selecionarTipoBarco(tipo) {
+            tipoBarcoAtual = tipo;
+            document.querySelectorAll('.btn-barco').forEach(btn => btn.classList.remove('selecionado'));
+            if (tipo === 'normal') btnNormal.classList.add('selecionado');
+            if (tipo === 'rapido') btnRapido.classList.add('selecionado');
+            if (tipo === 'pesado') btnPesado.classList.add('selecionado');
+            if (tipo === 'submarino') btnSub.classList.add('selecionado');
+            if (tipo === 'carrier') btnCarrier.classList.add('selecionado');
+            if (tipo === 'destroyer') btnDestroyer.classList.add('selecionado');
+            if (tipo === 'radar') btnRadar.classList.add('selecionado');
+        }
+
+        canvas.addEventListener('click', (e) => {
+            if (estadoJogo === 'POSICIONAMENTO') {
+                const rect = canvas.getBoundingClientRect();
+                const escala = canvas.width / rect.width;
+                let clickX = (e.clientX - rect.left) * escala + cameraX;
+                let clickY = (e.clientY - rect.top) * escala;
+
+                if (multiplayerAtivo()) {
+                    // No online, cada jogador posiciona somente seus próprios 6 barcos.
+                    if (minhaSala.papel === 'espectador' || clickY < 280) return;
+                    const numero = minhaSala.papel === 'p1' ? 1 : 2;
+                    const lista = numero === 1 ? basesJ1 : basesJ2;
+                    const dentroDoSeuLado = numero === 1
+                        ? clickX >= 150 && clickX <= 1050
+                        : clickX >= 1350 && clickX <= 2250;
+                    if (!dentroDoSeuLado || lista.length >= 6) return;
+
+                    adicionarBarco(lista, clickX);
+                    statusDiv.innerText = `Jogador ${numero}: barcos posicionados ${lista.length}/6.`;
+                    desenharCenario();
+                    salvarBarcosOnline(numero);
+                    atualizarPermissoesOnline();
+                    return;
+                }
+
+                // Modo local original: os dois jogadores usam o mesmo dispositivo.
+                if (clickY >= 280) {
+                    if (turno === 1 && clickX >= 150 && clickX <= 1050) {
+                        adicionarBarco(basesJ1, clickX);
+
+                        if (basesJ1.length < 6) {
+                            statusDiv.innerText = `Jogador 1: Posicione mais ${6 - basesJ1.length} barco(s). (${basesJ1.length}/6)`;
+                        } else {
+                            turno = 2;
+                            cameraX = 1600;
+                            selecionarTipoBarco('normal');
+                            statusDiv.innerText = `Jogador 2: Escolha o tipo de barco e clique no mar (direita) para posicionar (0/6).`;
+                        }
+                    } else if (turno === 2 && clickX >= 1350 && clickX <= 2250) {
+                        adicionarBarco(basesJ2, clickX);
+
+                        if (basesJ2.length < 6) {
+                            statusDiv.innerText = `Jogador 2: Posicione mais ${6 - basesJ2.length} barco(s). (${basesJ2.length}/6)`;
+                        } else {
+                            estadoJogo = 'BATALHA';
+                            tocarMusicaAberturaBatalhaUmaVez();
+                            turno = 1;
+                            cameraX = 0;
+                            menuSelecao.style.display = 'none';
+                            controlsDiv.style.display = 'block';
+                            statusDiv.innerText = `Vez do Jogador 1: Ajuste a mira e atire nos barcos inimigos! (Submarinos iniciam na superfície)`;
+                            atualizarBotoesHabilidades();
+                        }
+                    }
+                }
+                desenharCenario();
+            } else if (estadoJogo === 'TURNO_PAUSADO') {
+                if (podeAgirOnline()) avancarTurno();
+            }
+        });
+
+        function adicionarBarco(listaBases, x) {
+            let config = {
+                x: x,
+                y: 320,
+                viva: true,
+                tipo: tipoBarcoAtual,
+                submerso: false
+            };
+
+            if (tipoBarcoAtual === 'rapido') {
+                config.vidas = 1;
+                config.cor = '#e74c3c';
+            } else if (tipoBarcoAtual === 'pesado') {
+                config.vidas = 3;
+                config.cor = '#8e44ad';
+            } else if (tipoBarcoAtual === 'submarino') {
+                config.vidas = 1;
+                config.cor = '#16a085';
+            } else if (tipoBarcoAtual === 'carrier') {
+                config.vidas = 2;
+                config.cor = '#2c3e50';
+            } else if (tipoBarcoAtual === 'destroyer') {
+                config.vidas = 2;
+                config.cor = '#7f8c8d';
+            } else if (tipoBarcoAtual === 'radar') {
+                config.vidas = 1;
+                config.cor = '#f1c40f';
+            } else {
+                config.vidas = 1;
+                config.cor = '#d35400';
+            }
+
+            listaBases.push(config);
+        }
+
+        function verificarUltimoBarco() {
+            let barcosVivosJ1 = basesJ1.filter(b => b.viva).length;
+            let barcosVivosJ2 = basesJ2.filter(b => b.viva).length;
+
+            // Dispara quando qualquer um dos times tiver 2 barcos restantes (ou menos)
+            if ((barcosVivosJ1 <= 3 && barcosVivosJ1 > 0 && barcosVivosJ2 > 0) || 
+                (barcosVivosJ2 <= 3 && barcosVivosJ2 > 0 && barcosVivosJ1 > 0)) {
+                
+                if (!temporizadorNubladoIniciado) {
+                    // O horário é gravado junto ao estado da partida no Supabase.
+                    // Cada dispositivo calcula o mesmo progresso e inicia nuvens/raios no mesmo momento.
+                    iniciarTemporizadorNublado(Date.now());
+                }
+            }
+        }
+
+        function atualizarBotoesHabilidades() {
+            let meusBarcos = turno === 1 ? basesJ1 : basesJ2;
+            let temCarrier = meusBarcos.some(b => b.tipo === 'carrier' && b.viva);
+            let temRadar = meusBarcos.some(b => b.tipo === 'radar' && b.viva);
+            
+            let recarga = turno === 1 ? recargaHabilidadeJ1 : recargaHabilidadeJ2;
+
+            btnRadarEspecial.disabled = !temRadar || recarga > 0;
+            btnRadarEspecial.innerText = !temRadar ? "📡 Sem Radar" : (recarga > 0 ? `📡 Radar (${recarga})` : "📡 RADAR");
+
+            if (avioesBloqueadosPorMauTempo) {
+                btnAviaoEspecial.disabled = true;
+                btnAviaoEspecial.innerText = "🚫 Bloqueado por Mau Tempo";
+
+                btnBombardeiroEspecial.disabled = true;
+                btnBombardeiroEspecial.innerText = "🚫 Bloqueado por Mau Tempo";
+            } else {
+                btnAviaoEspecial.disabled = !temCarrier || recarga > 0;
+                btnAviaoEspecial.innerText = !temCarrier ? "✈️ Sem Carrier" : (recarga > 0 ? `✈️ Torpedeiro (${recarga})` : "✈️ TORPEDEIRO");
+
+                btnBombardeiroEspecial.disabled = !temCarrier || recarga > 0;
+                btnBombardeiroEspecial.innerText = !temCarrier ? "💣 Sem Carrier" : (recarga > 0 ? `💣 Bombardeiro (${recarga})` : "💣 BOMBARDEIRO");
+            }
+        }
+
+        function usarRadarEspecial() {
+            if (estadoJogo !== 'BATALHA' || !podeAgirOnline()) return;
+
+            if (turno === 1) {
+                sinalInterrompidoJ2 = true;
+                recargaHabilidadeJ1 = 4;
+            } else {
+                sinalInterrompidoJ1 = true;
+                recargaHabilidadeJ2 = 4;
+            }
+
+            statusDiv.innerText = `📡 Jogador ${turno} ativou o Radar Especial! O próximo tiro inimigo será em sigilo. Turno pulado!`;
+            estadoJogo = 'TURNO_PAUSADO';
+            controlsDiv.style.display = 'none';
+            verificarUltimoBarco();
+            desenharCenario();
+            salvarEstadoMultiplayer();
+            atualizarPermissoesOnline();
+        }
+
+        function usarAviaoTorpedeiro() {
+            if (avioesBloqueadosPorMauTempo || !podeAgirOnline()) return;
+            executarLancamentoAereo('torpedeiro');
+        }
+
+        function usarAviaoBombardeiro() {
+            if (avioesBloqueadosPorMauTempo || !podeAgirOnline()) return;
+            executarLancamentoAereo('bombardeiro');
+        }
+
+        async function executarLancamentoAereo(tipoAeronave) {
+            if (ataqueAereoReservando || estadoJogo !== 'BATALHA' || bala ||
+                avioesBloqueadosPorMauTempo || !podeAgirOnline()) return;
+
+            const turnoDoAtaque = turno;
+            const papelDoAtaque = minhaSala.papel;
+            let recargaAtual = turnoDoAtaque === 1 ? recargaHabilidadeJ1 : recargaHabilidadeJ2;
+            if (recargaAtual > 0) return;
+
+            let meusBarcos = turnoDoAtaque === 1 ? basesJ1 : basesJ2;
+            let carrier = meusBarcos.find(b => b.tipo === 'carrier' && b.viva);
+            if (!carrier) return;
+
+            let inimigos = turnoDoAtaque === 1 ? basesJ2 : basesJ1;
+            let barcosVivos = inimigos.filter(b => b.viva);
+            if (barcosVivos.length === 0) return;
+
+            const ataqueId = `${minhaSala.uid || 'local'}_air_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+            // No online, confirma a recarga no Supabase e reserva atomicamente a fase
+            // ANIMACAO_AVIAO. Isso bloqueia cliques repetidos e outras abas/dispositivos.
+            if (multiplayerAtivo()) {
+                ataqueAereoReservando = true;
+                try {
+                    const caminhoRecarga = turnoDoAtaque === 1 ? 'jogador1/recarga' : 'jogador2/recarga';
+                    const snapRecarga = await database.ref(`${REF_SALAS}/${minhaSala.codigo}/${caminhoRecarga}`).once('value');
+                    const recargaServidor = Number(snapRecarga.val() || 0);
+                    if (recargaServidor > 0) {
+                        if (turnoDoAtaque === 1) recargaHabilidadeJ1 = recargaServidor;
+                        else recargaHabilidadeJ2 = recargaServidor;
+                        atualizarBotoesHabilidades();
+                        statusDiv.innerText = `Habilidade em recarga: aguarde ${recargaServidor} turno(s).`;
+                        return;
+                    }
+
+                    const estadoRef = database.ref(`${REF_SALAS}/${minhaSala.codigo}/estado`);
+                    const reserva = await estadoRef.transaction(estadoSala => {
+                        if (!estadoSala || estadoSala.fase !== 'BATALHA' ||
+                            Number(estadoSala.turno) !== turnoDoAtaque ||
+                            papelDoAtaque !== `p${turnoDoAtaque}` ||
+                            (estadoSala.bala && estadoSala.bala.ativa) ||
+                            (estadoSala.ataqueAereo && estadoSala.ataqueAereo.ativa)) {
+                            return;
+                        }
+                        return {
+                            ...estadoSala,
+                            fase: 'ANIMACAO_AVIAO',
+                            mensagem: `✈️ Jogador ${turnoDoAtaque} iniciou um ataque aéreo!`,
+                            ataqueAereo: {
+                                id: ataqueId,
+                                dono: minhaSala.papel,
+                                ativa: true,
+                                aviao: null,
+                                projetil: null
+                            }
+                        };
+                    });
+
+                    if (!reserva.committed) {
+                        statusDiv.innerText = 'Ação aérea não autorizada: confira o turno e a recarga.';
+                        return;
+                    }
+                } catch (e) {
+                    console.error('[multiplayer] não foi possível reservar o ataque aéreo:', e);
+                    statusDiv.innerText = 'Erro ao reservar o ataque aéreo: ' + e.message;
+                    return;
+                } finally {
+                    ataqueAereoReservando = false;
+                }
+            }
+
+            // Se o turno mudou enquanto a leitura/transação estava pendente, não executa.
+            if (turno !== turnoDoAtaque ||
+                (multiplayerAtivo() && minhaSala.papel !== `p${turnoDoAtaque}`)) return;
+
+            idAtaqueAereoLocal = multiplayerAtivo() ? ataqueId : null;
+            if (turnoDoAtaque === 1) recargaHabilidadeJ1 = 4;
+            else recargaHabilidadeJ2 = 4;
+
+            let alvoEscolhido = barcosVivos[Math.floor(Math.random() * barcosVivos.length)];
+            let temDestroyer = inimigos.some(b => b.tipo === 'destroyer' && b.viva);
+
+            let chanceAbatido = (tipoAeronave === 'bombardeiro') ? 0.70 : 0.40;
+            let chanceAcerto = (tipoAeronave === 'bombardeiro') ? 0.80 : 0.50;
+
+            let seraAbatido = temDestroyer && (Math.random() < chanceAbatido);
+            let acertou = !seraAbatido && (Math.random() < chanceAcerto);
+
+            estadoJogo = 'ANIMACAO_AVIAO';
+            controlsDiv.style.display = 'none';
+            statusDiv.innerText = `✈️ ${tipoAeronave === 'bombardeiro' ? 'Avião Bombardeiro' : 'Avião Torpedeiro'} decolou!`;
+
+            let direcaoVoo = turnoDoAtaque === 1 ? 1 : -1;
+            
+            animacaoAviao = {
+                x: carrier.x,
+                y: 280,
+                destinoX: alvoEscolhido.x,
+                direcao: direcaoVoo,
+                tipo: tipoAeronave,
+                abatido: seraAbatido,
+                caindo: false,
+                tempoPlanar: 0,
+                tempoParaquedas: 0,
+                chamasQueda: 0,
+                pilotosEjetados: false
+            };
+
+            const g = 0.25;
+            const ehBomba = tipoAeronave === 'bombardeiro';
+            const vel = ehBomba ? 6 : 7;
+            const imune = alvoEscolhido.tipo === 'submarino' && alvoEscolhido.submerso;
+            const vaiAcertar = !imune && acertou;
+            const desvio = vaiAcertar ? 0 : (Math.random() < 0.5 ? -1 : 1) * (55 + Math.random() * 35);
+            const xImpacto = alvoEscolhido.x + desvio;
+            const yConves = alvoEscolhido.y - 4;
+            const yPouso = carrier.y - 20;
+            let fase = 'decolagem', contador = 0, avisoVolta = false, xFoco = carrier.x;
+
+            animacaoAviao.y = yPouso;
+            animacaoAviao.angulo = 0;
+            animacaoAviao.rodas = true;
+            animacaoAviao.carga = true;
+            projetilAereo = null;
+            atualizarBotoesHabilidades();
+            salvarEstadoMultiplayer();
+            atualizarPermissoesOnline();
+            publicarCameraMultiplayer(true);
+
+            const impactar = () => {
+                const xi = projetilAereo ? projetilAereo.x : alvoEscolhido.x;
+                projetilAereo = null;
+                if (imune) {
+                    statusDiv.innerText = `🌊 O submarino estava submerso e escapou ileso do ataque aéreo!`;
+                    criarRespingo(xi, 330); criarOnda(xi, 5); splashes.push({ x: xi, y: 330, raio: 8, alpha: 1.0 });
+                } else if (acertou) {
+                    alvoEscolhido.vidas--;
+                    statusDiv.innerText = `🎯 Ataque aéreo acertou em cheio o alvo inimigo!`;
+                    explodirBarco(alvoEscolhido, alvoEscolhido.x, alvoEscolhido.y - 6, alvoEscolhido.vidas <= 0);
+                    if (alvoEscolhido.vidas <= 0) {
+                        alvoEscolhido.viva = false;
+                        barcosAfundando.push({ x: alvoEscolhido.x, y: alvoEscolhido.y, angulo: 0, alpha: 1.0, timer: 0, tipo: alvoEscolhido.tipo });
+                    }
+                } else {
+                    statusDiv.innerText = `💨 O ataque aéreo errou o alvo!`;
+                    criarRespingo(xi, 330); criarOnda(xi, 5); splashes.push({ x: xi, y: 330, raio: 8, alpha: 1.0 });
+                }
+                xFoco = xi;
+                // Publica imediatamente vida/dano do alvo; o retorno do avião continua
+                // sendo transmitido em snapshots limitados a cerca de 10 por segundo.
+                salvarEstadoMultiplayer();
+            };
+
+            const soltar = () => {
+                animacaoAviao.carga = false;
+                projetilAereo = {
+                    tipo: ehBomba ? 'bomba' : 'torpedo', fase: 'queda',
+                    x: animacaoAviao.x, y: animacaoAviao.y + 12,
+                    vx: animacaoAviao.direcao * vel, vy: 0, dir: animacaoAviao.direcao
+                };
+                statusDiv.innerText = ehBomba ? '💣 Bomba lançada!' : '🚀 Torpedo lançado!';
+                fase = 'seguir'; contador = 0;
+            };
+
+            const concluir = () => {
+                animacaoAviao = null;
+                projetilAereo = null;
+                publicarCameraMultiplayer(true).finally(() => { idAtaqueAereoLocal = null; });
+                verificarUltimoBarco();
+                desenharCenario();
+                checarFimDeJogoOuPausar();
+            };
+
+            const loopAnimacao = setInterval(() => {
+                const av = animacaoAviao;
+                if (!av) { clearInterval(loopAnimacao); return; }
+
+                if (av.abatido && !av.caindo && (fase === 'decolagem' || fase === 'ida') &&
+                    Math.abs(av.x - (carrier.x + alvoEscolhido.x) / 2) < 20) {
+                    av.caindo = true;
+                    statusDiv.innerText = `🛡️ Destroyer inimigo atingiu o ${tipoAeronave}! Ele pega chamas gigantescas e começa a planar...`;
+                }
+
+                if (av.caindo) {
+                    av.x += av.direcao * 3; av.y += 1.2; av.angulo = 0.35;
+                    av.chamasQueda += 1; av.tempoPlanar += 1;
+                    if (av.tempoPlanar > 30) av.pilotosEjetados = true;
+                    if (av.y >= 320) { clearInterval(loopAnimacao); finalizarAtaqueAereo(); return; }
+                } else if (fase === 'decolagem') {
+                    av.x += av.direcao * 3; av.y -= 2.6; av.angulo = -0.3;
+                    if (av.y < yPouso - 40) av.rodas = false;
+                    if (av.y <= 120) { fase = 'ida'; av.angulo = 0; }
+                } else if (fase === 'ida') {
+                    av.x += av.direcao * vel;
+                    const falta = (xImpacto - av.x) * av.direcao;
+                    const tQueda = Math.sqrt(Math.max(0, 2 * (yConves - av.y) / g));
+                    if (falta <= (ehBomba ? vel * tQueda : 170)) soltar();
+                } else if (fase === 'seguir') {
+                    av.x += av.direcao * vel;
+                    if (++contador > 55) { fase = 'virar'; contador = 0; }
+                } else if (fase === 'virar') {
+                    contador++;
+                    av.x += av.direcao * vel * 0.6;
+                    av.angulo = 0.5 * Math.sin(contador / 28 * Math.PI);
+                    if (contador === 14) av.direcao *= -1;
+                    if (contador >= 28) { fase = 'volta'; av.angulo = 0; }
+                } else if (fase === 'volta') {
+                    if (!avisoVolta) { avisoVolta = true; statusDiv.innerText += ' ✈️ A aeronave volta ao carrier...'; }
+                    av.x += av.direcao * vel * 1.4;
+                    if ((carrier.x - av.x) * av.direcao <= 300) fase = 'pouso';
+                } else if (fase === 'pouso') {
+                    const falta = (carrier.x - av.x) * av.direcao;
+                    const prog = Math.max(0, Math.min(1, falta / 300));
+                    av.x += av.direcao * Math.max(1.8, vel * (0.3 + 0.7 * prog));
+                    av.y = yPouso - (yPouso - 120) * prog;
+                    av.angulo = -0.07;
+                    av.rodas = prog < 0.7;
+                    if (falta <= 3) { fase = 'parado'; contador = 0; av.y = yPouso; av.angulo = 0; av.rodas = true; }
+                } else if (fase === 'parado') {
+                    if (++contador > 40) { clearInterval(loopAnimacao); concluir(); return; }
+                }
+
+                const p = projetilAereo;
+                if (p) {
+                    if (p.fase === 'queda') {
+                        p.x += p.vx; p.y += p.vy; p.vy += g;
+                        if (ehBomba) {
+                            if (p.y >= (vaiAcertar ? yConves : 330)) impactar();
+                        } else if (p.y >= 332) {
+                            p.fase = 'correndo'; p.y = 340; p.vx = p.dir * 5; p.vy = 0;
+                            criarGotas(p.x, 330); criarOnda(p.x, 5); splashes.push({ x: p.x, y: 330, raio: 8, alpha: 1.0 });
+                        }
+                    } else if ((xImpacto - (p.x += p.vx)) * p.dir <= 0) {
+                        impactar();
+                    }
+                }
+
+                // O espectador mantém sua câmera manual mesmo durante animações aéreas.
+                // Os jogadores acompanham o avião/projétil e compartilham esse enquadramento.
+                if (!ehEspectadorOnline()) {
+                    let foco = av.x;
+                    if (projetilAereo) foco = projetilAereo.x;
+                    else if (fase === 'seguir' && contador < 50) foco = xFoco;
+                    const alvoCam = Math.max(0, Math.min(larguraMundo - canvas.width, foco - 400));
+                    cameraX += (alvoCam - cameraX) * 0.12;
+                    // Publica apenas snapshots do avião/projétil em frequência limitada.
+                    // Os outros jogadores interpolam localmente entre esses pontos.
+                    publicarAtaqueAereoMultiplayer();
+                }
+
+                desenharCenario();
+            }, 1000 / 60);
+        }
+
+        function finalizarAtaqueAereo() {
+            statusDiv.innerText = `💥 Aeronave caiu em chamas na água! Pilotos pousaram de paraquedas com segurança.`;
+            animacaoAviao = null;
+            projetilAereo = null;
+            publicarCameraMultiplayer(true).finally(() => { idAtaqueAereoLocal = null; });
+            verificarUltimoBarco();
+            desenharCenario();
+            checarFimDeJogoOuPausar();
+        }
+
+        function checarFimDeJogoOuPausar() {
+            setTimeout(() => {
+                let j1Perdeu = basesJ1.every(b => !b.viva);
+                let j2Perdeu = basesJ2.every(b => !b.viva);
+
+                if (j1Perdeu || j2Perdeu) {
+                    let vencedor = j1Perdeu ? "Jogador 2" : "Jogador 1";
+                    statusDiv.innerText = `FIM DE JOGO! ${vencedor} venceu!`;
+                    if (!multiplayerAtivo()) cameraX = turno === 1 ? 1600 : 0;
+                    
+                    estadoJogo = 'FIM';
+                    controlsDiv.style.display = 'none';
+
+                    // Para as músicas de suspense da fase final
+                    musicaSecret.pause();
+                    musicaDarkEnergy.pause();
+
+                    // Toca a música Triage at Dawn exatamente uma vez para indicar a derrota
+                    tocarMusicaPermitida(musicaTriage, true);
+
+                    desenharCenario();
+                    salvarEstadoMultiplayer();
+                    atualizarPermissoesOnline();
+                    return;
+                }
+
+                estadoJogo = 'TURNO_PAUSADO';
+                statusDiv.innerText = `Ataque aéreo finalizado! Jogador ${turno}, clique na tela para passar o turno.`;
+                salvarEstadoMultiplayer();
+                atualizarPermissoesOnline();
+            }, 1500);
+        }
+
+        function obterDeslocamentoOnda(x) {
+            let amp1 = modoNublado ? 8 : 6;
+            let amp2 = modoNublado ? 5 : 4;
+            return Math.sin(x * 0.015 + tempoOnda) * amp1 + Math.cos(x * 0.008 - tempoOnda * 0.5) * amp2;
+        }
+
+        function desenharCenario() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (ehEspectadorOnline()) {
+                const slider = document.getElementById('cameraEspectador');
+                if (slider && !arrastandoCameraEspectador) slider.value = String(Math.round(cameraX));
+            }
+            const em3D = !!window.R3D;
+            if (em3D) R3D.render();
+
+            ctx.save();
+            ctx.translate(-cameraX, 0);
+
+            const ceu = ctx.createLinearGradient(0, 0, 0, 280);
+            if (modoNublado) {
+                ceu.addColorStop(0, '#2b3641'); ceu.addColorStop(0.6, '#56636f'); ceu.addColorStop(1, '#85919c');
+            } else {
+                ceu.addColorStop(0, '#2c74c2'); ceu.addColorStop(0.55, '#6fb0e6'); ceu.addColorStop(1, '#d4eaf7');
+            }
+            if (!em3D) { ctx.fillStyle = ceu; ctx.fillRect(0, 0, larguraMundo, 280); }
+
+            if (!modoNublado && !em3D) {
+                const sx = solX(), sy = 70;
+                const halo = ctx.createRadialGradient(sx, sy, 6, sx, sy, 170);
+                halo.addColorStop(0, 'rgba(255,250,220,0.95)');
+                halo.addColorStop(0.15, 'rgba(255,236,170,0.55)');
+                halo.addColorStop(1, 'rgba(255,220,140,0)');
+                ctx.fillStyle = halo;
+                ctx.fillRect(sx - 170, sy - 170, 340, 340);
+                ctx.fillStyle = '#fffbe6';
+                ctx.beginPath();
+                ctx.arc(sx, sy, 17, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            desenharRaios();
+
+            ctx.fillStyle = modoNublado ? 'rgba(93, 109, 126, 0.7)' : 'rgba(255, 255, 255, 0.7)';
+            if (!em3D) for (let i = 200; i < larguraMundo; i += 350) {
+                desenharNuvem(i + Math.sin(tempoOnda * 0.25 + i) * 14, 55 + (i % 30));
+            }
+
+            tempoOnda += modoNublado ? 0.05 : 0.035;
+
+            if (!em3D) {
+            const mar = ctx.createLinearGradient(0, 272, 0, 400);
+            mar.addColorStop(0, modoNublado ? '#2a6f93' : '#3d9bd0');
+            mar.addColorStop(0.35, modoNublado ? '#1b4f72' : '#1f6fae');
+            mar.addColorStop(1, modoNublado ? '#0b2236' : '#0a2a52');
+            ctx.fillStyle = mar;
+            ctx.beginPath();
+            ctx.moveTo(cameraX, 400);
+            ctx.lineTo(cameraX, 280);
+            for (let x = cameraX - 20; x <= cameraX + canvas.width + 20; x += 15) {
+                let y = 280 + obterDeslocamentoOnda(x);
+                ctx.lineTo(x, y);
+            }
+            ctx.lineTo(cameraX + canvas.width, 400);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = modoNublado ? 'rgba(80, 140, 180, 0.28)' : 'rgba(150, 215, 245, 0.2)';
+            ctx.beginPath();
+            ctx.moveTo(cameraX, 400);
+            ctx.lineTo(cameraX, 290);
+            for (let x = cameraX - 20; x <= cameraX + canvas.width + 20; x += 15) {
+                let ampSec = modoNublado ? 7 : 5;
+                let y = 290 + Math.sin(x * 0.02 - tempoOnda * 1.2) * ampSec;
+                ctx.lineTo(x, y);
+            }
+            ctx.lineTo(cameraX + canvas.width, 400);
+            ctx.closePath();
+            ctx.fill();
+
+            desenharEspuma();
+            }
+
+            if (estadoJogo === 'POSICIONAMENTO') {
+                ctx.strokeStyle = '#ffde59';
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(1200, 0);
+                ctx.lineTo(1200, 400);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            let balancoBaseJ1 = em3D ? R3D.balanco(navioCanhaoJ1.x) : (modoNublado ? obterDeslocamentoOnda(navioCanhaoJ1.x) * 0.4 : 0);
+            let balancoBaseJ2 = em3D ? R3D.balanco(navioCanhaoJ2.x) : (modoNublado ? obterDeslocamentoOnda(navioCanhaoJ2.x) * 0.4 : 0);
+
+            desenharNavioBase(navioCanhaoJ1.x, navioCanhaoJ1.y + balancoBaseJ1, '#00fff5', 1);
+            desenharNavioBase(navioCanhaoJ2.x, navioCanhaoJ2.y + balancoBaseJ2, '#ff4757', 2);
+
+            basesJ1.forEach(b => {
+                if (b.viva && !em3D) desenharBarcoAlvo(b);
+            });
+
+            basesJ2.forEach(b => {
+                if (b.viva && !em3D) desenharBarcoAlvo(b);
+            });
+
+            splashes.forEach((s, index) => {
+                ctx.save();
+                ctx.strokeStyle = `rgba(255, 255, 255, ${s.alpha})`;
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.raio, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                ctx.strokeStyle = `rgba(0, 255, 245, ${s.alpha * 0.6})`;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.raio * 1.5, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+
+                s.raio += 2.2;
+                s.alpha -= 0.025;
+                if (s.alpha <= 0) splashes.splice(index, 1);
+            });
+
+            if (animacaoAviao) {
+                ctx.save();
+                ctx.translate(animacaoAviao.x, animacaoAviao.y);
+                let flip = animacaoAviao.direcao;
+                ctx.rotate((animacaoAviao.angulo || 0) * flip);
+                ctx.scale(flip * 1.3, 1.3);
+
+                let corAviao = animacaoAviao.tipo === 'bombardeiro' ? '#d35400' : '#e67e22';
+                if (animacaoAviao.caindo) corAviao = '#7f8c8d';
+
+                if (!em3D) desenharAviaoDetalhado(corAviao, animacaoAviao.caindo, animacaoAviao.tipo);
+
+                if (animacaoAviao.caindo) {
+                    ctx.fillStyle = '#ff4757';
+                    ctx.beginPath();
+                    ctx.arc(-8, -2, 18 + Math.sin(animacaoAviao.chamasQueda * 0.4) * 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#ffa502';
+                    ctx.beginPath();
+                    ctx.arc(2, 0, 11 + Math.cos(animacaoAviao.chamasQueda * 0.4) * 4, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    if (animacaoAviao.pilotosEjetados) {
+                        ctx.restore();
+                        
+                        function desenharParaquedistaGrande( offsetX, offsetY ) {
+                            ctx.save();
+                            ctx.translate(animacaoAviao.x + offsetX, animacaoAviao.y + animacaoAviao.tempoParaquedas + offsetY);
+                            ctx.scale(1.4, 1.4);
+                            
+                            ctx.strokeStyle = '#ffffff';
+                            ctx.lineWidth = 1.5;
+                            ctx.beginPath();
+                            ctx.moveTo(0, -6); ctx.lineTo(-8, 9);
+                            ctx.moveTo(0, -6); ctx.lineTo(8, 9);
+                            ctx.stroke();
+
+                            ctx.fillStyle = '#ff4757';
+                            ctx.beginPath();
+                            ctx.arc(0, -6, 16, Math.PI, 0, false);
+                            ctx.fill();
+                            ctx.fillStyle = '#ffffff';
+                            ctx.beginPath();
+                            ctx.arc(0, -6, 16, Math.PI * 0.75, Math.PI * 0.25, false);
+                            ctx.fill();
+
+                            ctx.fillStyle = '#2c3e50';
+                            ctx.fillRect(-3.5, 9, 7, 12);
+                            ctx.fillStyle = '#f39c12';
+                            ctx.fillRect(-4.5, 12, 9, 6);
+
+                            ctx.restore();
+                        }
+
+                        desenharParaquedistaGrande(-28, 0);
+                        desenharParaquedistaGrande(28, -15);
+
+                        animacaoAviao.tempoParaquedas += 0.8;
+                    }
+                }
+
+                if (!animacaoAviao.pilotosEjetados) {
+                    ctx.restore();
+                }
+            }
+
+            for (let i = barcosAfundando.length - 1; i >= 0; i--) desenharAfundando(barcosAfundando[i], i);
+
+            desenharBala();
+            desenharProjetilAereo();
+            desenharParticulas();
+
+            if (modoNublado) {
+                ctx.strokeStyle = 'rgba(174, 214, 241, 0.35)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                for (let g of gotasChuva) {
+                    ctx.moveTo(g.x, g.y);
+                    ctx.lineTo(g.x + g.velocidadeX, g.y + g.comprimento);
+
+                    g.x += g.velocidadeX;
+                    g.y += g.velocidadeY;
+
+                    if (g.y > 400) {
+                        g.y = -15;
+                        g.x = Math.random() * larguraMundo;
+                    }
+                    if (g.x < 0) {
+                        g.x += larguraMundo;
+                    }
+                }
+                ctx.stroke();
+            }
+
+            if (flashTrovaoAlpha > 0) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${flashTrovaoAlpha})`;
+                ctx.fillRect(cameraX, 0, canvas.width, canvas.height);
+                flashTrovaoAlpha -= 0.025;
+                if (flashTrovaoAlpha < 0) flashTrovaoAlpha = 0;
+            }
+
+            ctx.restore();
+            desenharVinheta();
+        }
+
+        function desenharNuvem(x, y) {
+            const blobs = [[0, 0, 22], [18, -9, 18], [38, -2, 24], [58, 2, 18], [-16, 4, 15], [28, 8, 20]];
+            ctx.save();
+            blobs.forEach(([dx, dy, r]) => {
+                const g = ctx.createRadialGradient(x + dx - 4, y + dy - 6, 2, x + dx, y + dy, r);
+                g.addColorStop(0, modoNublado ? 'rgba(150,162,175,0.85)' : 'rgba(255,255,255,0.95)');
+                g.addColorStop(1, modoNublado ? 'rgba(80,95,110,0)' : 'rgba(215,230,245,0)');
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.arc(x + dx, y + dy, r, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.restore();
+        }
+
+        // ================= GRÁFICOS REALISTAS =================
+        let particulas = [];
+        let rastroBala = [];
+        let ultimoTickParticulas = 0;
+
+        function rand(a, b) { return a + Math.random() * (b - a); }
+        function solX() { return cameraX * 0.85 + 560; }
+
+        function desenharEspuma() {
+            const x0 = cameraX - 20, x1 = cameraX + canvas.width + 20;
+
+            const neblina = ctx.createLinearGradient(0, 250, 0, 300);
+            neblina.addColorStop(0, 'rgba(255,255,255,0)');
+            neblina.addColorStop(0.55, modoNublado ? 'rgba(160,175,190,0.28)' : 'rgba(255,255,255,0.32)');
+            neblina.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = neblina;
+            ctx.fillRect(x0, 250, x1 - x0, 50);
+
+            ctx.strokeStyle = modoNublado ? 'rgba(220,235,245,0.4)' : 'rgba(255,255,255,0.45)';
+            ctx.lineWidth = 1.6;
+            ctx.beginPath();
+            for (let x = x0; x <= x1; x += 15) {
+                const y = 280.5 + obterDeslocamentoOnda(x);
+                if (x === x0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+
+            if (!modoNublado) { // reflexo do sol na água
+                const sx = solX();
+                for (let i = 0; i < 26; i++) {
+                    const w = 4 + i * 1.6 * (0.6 + 0.4 * Math.sin(tempoOnda * 3 + i));
+                    ctx.fillStyle = `rgba(255,245,200,${0.55 - i * 0.018})`;
+                    ctx.fillRect(sx + Math.sin(tempoOnda * 1.5 + i * 1.7) * (6 + i * 0.5) - w / 2, 288 + i * 4, w, 1.6);
+                }
+            }
+        }
+
+        function desenharBarcoAlvo(b) {
+            const bal = modoNublado ? obterDeslocamentoOnda(b.x) * 0.45 : 0;
+            const yAgua = b.y + bal + 12;
+
+            // reflexo suave na água
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(b.x - 90, yAgua, 180, 70);
+            ctx.clip();
+            ctx.translate(0, 2 * yAgua);
+            ctx.scale(1, -1);
+            ctx.globalAlpha = 0.22;
+            desenharBarcoAlvoBase(b);
+            ctx.restore();
+
+            desenharBarcoAlvoBase(b);
+
+            // linha d'água: o casco fica parcialmente dentro do mar
+            const larg = ({ carrier: 60, destroyer: 48, radar: 44, submarino: 40, pesado: 32, rapido: 24 }[b.tipo] || 28) + 6;
+            const topo = b.y + bal + 14;
+            const prof = b.tipo === 'submarino' ? 30 : 8;
+            const ag = ctx.createLinearGradient(0, topo, 0, topo + prof);
+            ag.addColorStop(0, modoNublado ? 'rgba(42,111,147,0.5)' : 'rgba(61,155,208,0.45)');
+            ag.addColorStop(1, 'rgba(10,42,82,0.92)');
+            ctx.fillStyle = ag;
+            ctx.beginPath();
+            ctx.moveTo(b.x - larg, topo + prof);
+            for (let dx = -larg; dx <= larg; dx += 6) {
+                ctx.lineTo(b.x + dx, topo + Math.sin((b.x + dx) * 0.09 + tempoOnda * 2) * 1.6);
+            }
+            ctx.lineTo(b.x + larg, topo + prof);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+            ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            for (let dx = -larg; dx <= larg; dx += 6) {
+                const y = topo + Math.sin((b.x + dx) * 0.09 + tempoOnda * 2) * 1.6;
+                if (dx === -larg) ctx.moveTo(b.x + dx, y); else ctx.lineTo(b.x + dx, y);
+            }
+            ctx.stroke();
+        }
+
+        function desenharBala() {
+            // Usa o projétil local quando este dispositivo está atirando; caso
+            // contrário, desenha a cópia visual recebida pelo Supabase.
+            const projetil = bala || balaRemota;
+            const rastro = bala ? rastroBala : rastroBalaRemota;
+            const remota = !bala && !!balaRemota;
+
+            if (!projetil) {
+                rastroBala.length = 0;
+                rastroBalaRemota = [];
+                return;
+            }
+
+            const u = rastro[rastro.length - 1];
+            if (!u || Math.hypot(projetil.x - u.x, projetil.y - u.y) > 3) {
+                rastro.push({ x: projetil.x, y: projetil.y });
+            }
+            if (rastro.length > 22) rastro.shift();
+
+            rastro.forEach((p, i) => {
+                const k = i / rastro.length;
+                ctx.fillStyle = remota
+                    ? `rgba(0,255,245,${0.34 * k})`
+                    : `rgba(230,230,230,${0.28 * k})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 2 + 4 * k, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            if (remota) {
+                ctx.save();
+                ctx.shadowColor = '#00fff5';
+                ctx.shadowBlur = 13;
+            }
+            const g = ctx.createRadialGradient(projetil.x - 2.5, projetil.y - 2.5, 1, projetil.x, projetil.y, 7);
+            g.addColorStop(0, '#d9dde0'); g.addColorStop(0.45, '#5d6870'); g.addColorStop(1, '#14181c');
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.arc(projetil.x, projetil.y, 7, 0, Math.PI * 2);
+            ctx.fill();
+            if (remota) ctx.restore();
+        }
+
+        function criarExplosao(x, y, escala) {
+            for (let i = 0; i < 26 * escala; i++) {
+                const a = rand(0, Math.PI * 2), v = rand(0.5, 4.2) * escala;
+                particulas.push({ tipo: 'fogo', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1.2, vida: 0, max: rand(18, 38), tam: rand(8, 20) * escala });
+            }
+            for (let i = 0; i < 14 * escala; i++) {
+                const a = rand(Math.PI * 1.1, Math.PI * 1.9), v = rand(2, 7) * escala;
+                particulas.push({ tipo: 'faisca', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, vida: 0, max: rand(20, 45), tam: 2 });
+            }
+            for (let i = 0; i < 10 * escala; i++) emitirFumaca(x + rand(-12, 12), y + rand(-8, 4));
+        }
+
+        function emitirFumaca(x, y) {
+            particulas.push({ tipo: 'fumaca', x, y, vx: rand(-0.3, 0.5), vy: rand(-1.1, -0.4), vida: 0, max: rand(60, 110), tam: rand(10, 20) });
+        }
+
+        // ---- coluna d'água: a água explode para cima (como uma detonação submarina), com gravidade e queda das gotas ----
+        function mkPuff(rgb) {
+            const c = document.createElement('canvas'); c.width = c.height = 64;
+            const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 2, 32, 32, 32);
+            g.addColorStop(0, `rgba(${rgb},0.95)`); g.addColorStop(0.55, `rgba(${rgb},0.55)`); g.addColorStop(1, `rgba(${rgb},0)`);
+            x.fillStyle = g; x.fillRect(0, 0, 64, 64); return c;
+        }
+        // cores da coluna: o azul da água [mar calmo, mar na tempestade]
+        const AGUA_COR = [
+            { jato: '85,165,225', bruma: '125,185,235', nucleo: '28,95,160', espuma: '150,205,242' },
+            { jato: '60,115,160', bruma: '90,140,180', nucleo: '24,70,110', espuma: '110,155,195' }
+        ];
+        const SPR_BRUMA = AGUA_COR.map(c => mkPuff(c.bruma)), SPR_NUCLEO = AGUA_COR.map(c => mkPuff(c.nucleo));
+
+        function criarColunaAgua(x, esc) {
+            esc = Math.min(1.8, esc);
+            const yAgua = 332 + (window.R3D ? R3D.balanco(x) : 0), g = 0.24;
+            const vMax = Math.sqrt(2 * g * 150 * esc), raiz = Math.sqrt(esc);
+            // corpo escuro da coluna (sobe em fila) + bruma
+            for (let i = 0; i < 16; i++) {
+                particulas.push({ tipo: 'nucleo', x: x + rand(-4, 4) * esc, y: yAgua, vx: rand(-0.25, 0.25), vy: -vMax * rand(0.35, 0.8), vida: 0, max: rand(55, 85), tam: rand(8, 14) * raiz, atraso: Math.floor(i * 1.6) });
+            }
+            for (let i = 0; i < 12; i++) {
+                particulas.push({ tipo: 'bruma', x: x + rand(-14, 14) * esc, y: yAgua - rand(0, 40) * esc, vx: rand(-0.4, 0.4), vy: rand(-1.6, -0.5), vida: 0, max: rand(60, 110), tam: rand(22, 38) * raiz, atraso: Math.floor(rand(0, 14)) });
+            }
+            // spray branco: mais largo no topo, com jatos inclinados que deixam a borda irregular
+            for (let i = 0; i < 70 * esc + 20; i++) {
+                const v = vMax * rand(0.25, 1), spike = i % 7 === 0;
+                particulas.push({ tipo: 'jato', x: x + rand(-5, 5) * esc, y: yAgua, vx: spike ? (Math.random() < 0.5 ? -1 : 1) * rand(1.2, 2.8) : rand(-1, 1) * 0.28 * v, vy: -v * (spike ? rand(0.7, 0.95) : 1), vida: 0, max: 220, tam: rand(1.4, 3.6) * raiz, yAgua: yAgua + rand(0, 6), atraso: Math.floor(rand(0, 8)) });
+            }
+            // coroa na base: gotas rasantes e espuma se espalhando na superfície
+            for (let i = 0; i < 26 * esc; i++) {
+                const dir = i % 2 ? 1 : -1, a = rand(0.25, 1.0);
+                particulas.push({ tipo: 'jato', x, y: yAgua - 2, vx: dir * Math.cos(a) * rand(2, 5) * raiz, vy: -Math.sin(a) * rand(2, 5) * raiz, vida: 0, max: 120, tam: rand(1.2, 2.8), yAgua: yAgua + rand(0, 5) });
+            }
+            particulas.push({ tipo: 'espuma', x, y: yAgua, vx: 0, vy: 0, vida: 0, max: 80, tam: 70 * esc });
+            particulas.push({ tipo: 'bruma', x, y: yAgua - 6, vx: 0, vy: -0.2, vida: 0, max: 50, tam: 36 * esc });
+        }
+
+        function criarRespingo(x, y, esc) { // chamado quando a bala ou o ataque aéreo cai na água
+            criarColunaAgua(x, esc || 1);
+        }
+
+        function criarGotas(x, y) {
+            for (let i = 0; i < 22; i++) {
+                particulas.push({ tipo: 'gota', x: x + rand(-6, 6), y, vx: rand(-1.8, 1.8), vy: rand(-5.5, -2), vida: 0, max: rand(24, 40), tam: rand(1.5, 3.2) });
+            }
+        }
+
+        function desenharParticulas() {
+            const agora = performance.now();
+            const tm = progressoNuvens() > 0.5 ? 1 : 0; // tom da água (calmo ou tempestade)
+            const avancar = agora - ultimoTickParticulas >= 14; // mesma velocidade mesmo se o cenário for redesenhado mais vezes
+            if (avancar) ultimoTickParticulas = agora;
+
+            for (let i = particulas.length - 1; i >= 0; i--) {
+                const p = particulas[i];
+                if (p.atraso > 0) { if (avancar) p.atraso--; continue; } // ainda não nasceu
+                const t = p.vida / p.max;
+                ctx.save();
+                if (p.tipo === 'fumaca') {
+                    const r = p.tam * (1 + t * 2.2);
+                    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+                    g.addColorStop(0, `rgba(60,60,60,${0.5 * (1 - t)})`);
+                    g.addColorStop(1, 'rgba(60,60,60,0)');
+                    ctx.fillStyle = g;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+                } else if (p.tipo === 'fogo') {
+                    ctx.globalCompositeOperation = 'lighter';
+                    const r = Math.max(1, p.tam * (1 - t * 0.6));
+                    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+                    g.addColorStop(0, `rgba(255,240,170,${1 - t})`);
+                    g.addColorStop(0.5, `rgba(255,120,30,${0.8 * (1 - t)})`);
+                    g.addColorStop(1, 'rgba(200,30,0,0)');
+                    ctx.fillStyle = g;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+                } else if (p.tipo === 'faisca') {
+                    ctx.strokeStyle = p.azul ? `rgba(150,215,255,${1 - t})` : `rgba(255,${Math.floor(210 - 120 * t)},80,${1 - t})`;
+                    ctx.lineWidth = 1.6;
+                    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx * 2, p.y - p.vy * 2); ctx.stroke();
+                } else if (p.tipo === 'jato') { // spray: risco branco na direção do movimento
+                    ctx.strokeStyle = `rgba(${AGUA_COR[tm].jato},${(1 - t * t) * 0.95})`;
+                    ctx.lineWidth = p.tam; ctx.lineCap = 'round';
+                    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx * 1.8, p.y - p.vy * 1.8); ctx.stroke();
+                } else if (p.tipo === 'nucleo' || p.tipo === 'bruma') {
+                    const r = p.tam * (1 + t * (p.tipo === 'nucleo' ? 0.9 : 1.4));
+                    ctx.globalAlpha = p.tipo === 'nucleo' ? 0.6 * (1 - t * t) : 0.5 * (1 - t);
+                    ctx.drawImage((p.tipo === 'nucleo' ? SPR_NUCLEO : SPR_BRUMA)[tm], p.x - r, p.y - r, 2 * r, 2 * r);
+                } else if (p.tipo === 'espuma') { // espuma achatada na superfície
+                    const rx = p.tam * (0.25 + 0.75 * Math.sqrt(t));
+                    ctx.globalAlpha = 0.85 * (1 - t);
+                    ctx.fillStyle = `rgb(${AGUA_COR[tm].espuma})`; ctx.beginPath(); ctx.ellipse(p.x, p.y + 3, rx, rx * 0.22, 0, 0, Math.PI * 2); ctx.fill();
+                } else if (p.tipo === 'estilhaco') {
+                    ctx.globalAlpha = 1 - t * t;
+                    ctx.translate(p.x, p.y); ctx.rotate(p.vida * 0.25 * p.rot);
+                    ctx.fillStyle = p.cor; ctx.fillRect(-p.tam / 2, -p.tam / 4, p.tam, p.tam / 2);
+                } else {
+                    ctx.fillStyle = `rgba(220,240,255,${0.9 * (1 - t)})`;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.tam, 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.restore();
+
+                if (avancar) {
+                    p.x += p.vx; p.y += p.vy; p.vida++;
+                    if (p.tipo === 'faisca' || p.tipo === 'gota' || p.tipo === 'estilhaco') p.vy += 0.22;
+                    if (p.tipo === 'fogo') p.vy -= 0.04;
+                    if (p.tipo === 'fumaca') p.vx *= 0.99;
+                    if (p.tipo === 'jato') { p.vy += 0.24; p.vx *= 0.995; }
+                    else if (p.tipo === 'nucleo') { p.vy += 0.1; p.vx *= 0.99; }
+                    else if (p.tipo === 'bruma') { p.vx *= 0.98; p.vy *= 0.985; }
+                    const caiu = p.tipo === 'jato' && p.vy > 0 && p.y > p.yAgua; // a gota volta para a água
+                    if (caiu && p.tam > 2.2) particulas.push({ tipo: 'espuma', x: p.x, y: p.yAgua, vx: 0, vy: 0, vida: 0, max: 26, tam: 10 + p.tam * 3 });
+                    if (caiu || p.vida >= p.max || ((p.tipo === 'gota' || p.tipo === 'estilhaco') && p.y > 332)) particulas.splice(i, 1);
+                }
+            }
+        }
+
+        let projetilAereo = null;
+        const DUR_AFUNDAR = { normal: 130, rapido: 100, pesado: 200, submarino: 150, carrier: 270, destroyer: 210, radar: 150 };
+
+        function emitirFogo(x, y) {
+            particulas.push({ tipo: 'fogo', x, y, vx: rand(-0.4, 0.4), vy: rand(-1.4, -0.5), vida: 0, max: rand(18, 32), tam: rand(8, 16) });
+        }
+
+        function desenharProjetilAereo() {
+            const p = projetilAereo;
+            if (!p) return;
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            if (p.tipo === 'bomba') {
+                ctx.rotate(Math.atan2(p.vy, p.vx));
+                ctx.fillStyle = '#2c3e50'; ctx.beginPath(); ctx.ellipse(0, 0, 8, 3.4, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#c0392b'; ctx.fillRect(-11, -3, 4, 6);
+                ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(-3, -2.4, 8, 1);
+            } else if (p.fase === 'queda') {
+                ctx.rotate(Math.atan2(p.vy, p.vx));
+                ctx.fillStyle = '#7f8c8d'; ctx.beginPath(); ctx.ellipse(0, 0, 11, 2.8, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.arc(10, 0, 2, 0, Math.PI * 2); ctx.fill();
+            } else {
+                const d = p.dir;
+                const esteira = ctx.createLinearGradient(-d * 70, 0, 0, 0);
+                esteira.addColorStop(0, 'rgba(255,255,255,0)'); esteira.addColorStop(1, 'rgba(255,255,255,0.55)');
+                ctx.fillStyle = esteira; ctx.fillRect(Math.min(-d * 70, 0), -1.5, 70, 3);
+                ctx.fillStyle = '#8aa09a'; ctx.beginPath(); ctx.ellipse(0, 0, 11, 2.8, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.arc(d * 10, 0, 2, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        // Cada tipo de barco afunda de um jeito diferente
+        function desenharAfundando(b, i) {
+            const agora = performance.now();
+            const avancar = agora - (b.ult || 0) >= 14;
+            if (avancar) { b.ult = agora; b.timer++; }
+            const t = b.tipo;
+            const dur = DUR_AFUNDAR[t] || 140;
+            const k = Math.min(1, b.timer / dur), e = k * k;
+            const dir = b.x < 1200 ? 1 : -1;
+
+            if (!window.R3D) {
+            ctx.save();
+            ctx.translate(b.x, b.y);
+            ctx.globalAlpha = Math.max(0, 1 - Math.pow(k, 2.4));
+            if (t === 'normal') {            // tomba de lado, com a vela em chamas
+                ctx.translate(0, 40 * e); ctx.rotate(dir * 1.45 * Math.min(1, k * 1.6));
+                DESENHOS.normal({});
+            } else if (t === 'rapido') {     // explode e sai girando pelos ares
+                ctx.translate(0, -Math.sin(Math.min(1, k * 1.25) * Math.PI) * 60 + 30 * e); ctx.rotate(dir * k * 9);
+                DESENHOS.rapido({});
+            } else if (t === 'pesado') {     // afunda reto, com explosões em cadeia no convés
+                ctx.translate(0, 34 * e); ctx.rotate(dir * 0.14 * k);
+                DESENHOS.pesado({});
+            } else if (t === 'submarino') {  // mergulha de proa
+                ctx.translate(0, 70 * e); ctx.rotate(dir * 1.35 * Math.min(1, k * 1.4));
+                DESENHOS.submarino({ submerso: false });
+            } else if (t === 'carrier') {    // parte-se ao meio
+                const s = Math.min(1, k * 1.8);
+                [-1, 1].forEach(lado => {
+                    ctx.save();
+                    ctx.beginPath(); ctx.rect(lado < 0 ? -90 : 0, -60, 90, 130); ctx.clip();
+                    ctx.translate(lado * 12 * s, 36 * e); ctx.rotate(-lado * 0.42 * s);
+                    DESENHOS.carrier({});
+                    ctx.restore();
+                });
+            } else if (t === 'destroyer') {  // popa afunda primeiro e a proa se ergue
+                ctx.translate(0, 46 * e); ctx.rotate(-1.0 * Math.min(1, k * 1.3));
+                DESENHOS.destroyer({});
+            } else {                         // radar: curto-circuito, treme e implode
+                ctx.translate((Math.random() - 0.5) * 5 * (1 - k), 30 * e); ctx.rotate(dir * 0.2 * k);
+                DESENHOS.radar({});
+                if (k < 0.8 && Math.random() < 0.5) {
+                    ctx.strokeStyle = 'rgba(140,210,255,0.9)'; ctx.lineWidth = 1.6; ctx.beginPath();
+                    let x = 0, y = -24; ctx.moveTo(x, y);
+                    for (let j = 0; j < 5; j++) { x += rand(-9, 9); y += rand(3, 9); ctx.lineTo(x, y); }
+                    ctx.stroke();
+                }
+            }
+            ctx.restore();
+            }
+
+            // bolhas subindo
+            if (k > 0.25) {
+                ctx.save(); ctx.translate(b.x, b.y);
+                for (let j = 0; j < 7; j++) {
+                    const ph = (b.timer * 0.6 + j * 17) % 60;
+                    ctx.fillStyle = `rgba(255,255,255,${0.6 * (1 - ph / 60)})`;
+                    ctx.beginPath(); ctx.arc(Math.sin(j * 2.3 + ph * 0.2) * 14, 12 - ph * 0.8, 1.5 + (j % 3), 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.restore();
+            }
+
+            if (avancar) {
+                const yb = b.y - 10 + 30 * e;
+                if (t !== 'submarino' && t !== 'radar' && k < 0.85) {
+                    emitirFogo(b.x + rand(-14, 14), yb);
+                    if (b.timer % 3 === 0) emitirFumaca(b.x + rand(-14, 14), yb - 10);
+                }
+                if (t === 'submarino' && b.timer % 4 === 0) emitirFumaca(b.x + rand(-10, 10), b.y - 4);
+                if (t === 'rapido' && b.timer === 1) criarExplosao(b.x, b.y - 8, 1.6);
+                if (t === 'pesado' && b.timer % 28 === 5) criarExplosao(b.x + rand(-22, 22), yb, 0.7);
+                if (t === 'carrier' && b.timer % 35 === 3) criarExplosao(b.x + rand(-45, 45), yb, 1.0);
+                if (t === 'destroyer' && b.timer % 40 === 4) criarExplosao(b.x + rand(-30, 30), yb, 0.8);
+                if (t === 'radar') {
+                    if (b.timer % 6 === 0) particulas.push({ tipo: 'faisca', x: b.x + rand(-8, 8), y: b.y - 22, vx: rand(-3, 3), vy: rand(-4, -1), vida: 0, max: 25, tam: 2 });
+                    if (b.timer === dur - 1) criarExplosao(b.x, b.y + 20, 1.1);
+                }
+            }
+            if (b.timer >= dur) barcosAfundando.splice(i, 1);
+        }
+
+        function desenharVinheta() {
+            const g = ctx.createRadialGradient(canvas.width / 2, canvas.height / 2, canvas.height * 0.55,
+                                               canvas.width / 2, canvas.height / 2, canvas.width * 0.62);
+            g.addColorStop(0, 'rgba(0,0,0,0)');
+            g.addColorStop(1, 'rgba(0,0,0,0.38)');
+            ctx.fillStyle = g;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function desenharNavioBase(x, y, cor, idCanhao) {
+            if (!window.R3D) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.fillStyle = '#2c3e50';
+            ctx.beginPath();
+            ctx.moveTo(-35, 5);
+            ctx.lineTo(35, 5);
+            ctx.lineTo(25, 20);
+            ctx.lineTo(-25, 20);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = cor;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#bdc3c7';
+            ctx.fillRect(-15, -5, 30, 10);
+            ctx.restore();
+            }
+
+            desenharCanhao(x, y - 5, cor, idCanhao);
+        }
+
+        // ---- helpers de desenho ----
+        function poli(pts, c1, c2, y0, y1) {
+            const g = ctx.createLinearGradient(0, y0, 0, y1);
+            g.addColorStop(0, c1); g.addColorStop(1, c2);
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+            ctx.closePath();
+            ctx.fill();
+        }
+        function ret(x, y, w, h, cor) { ctx.fillStyle = cor; ctx.fillRect(x, y, w, h); }
+        function linha(x1, y1, x2, y2, cor, larg) {
+            ctx.strokeStyle = cor; ctx.lineWidth = larg;
+            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        }
+
+        const DESENHOS = {
+            normal() {
+                poli([[-26, 0], [26, 0], [19, 15], [-19, 15]], '#b5651d', '#5a2d0f', 0, 15);
+                linha(-25, 2, 25, 2, 'rgba(255,220,160,0.55)', 1.5);
+                ret(-2, -26, 4, 26, '#6b4a2b');
+                const v = ctx.createLinearGradient(0, 0, 18, 0);
+                v.addColorStop(0, '#ffffff'); v.addColorStop(1, '#d3dde6');
+                ctx.fillStyle = v;
+                ctx.beginPath(); ctx.moveTo(3, -25); ctx.quadraticCurveTo(22, -12, 16, -3); ctx.lineTo(3, -3); ctx.closePath(); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(-3, -22); ctx.quadraticCurveTo(-18, -12, -14, -4); ctx.lineTo(-3, -4); ctx.closePath(); ctx.fill();
+                ctx.fillStyle = '#e74c3c';
+                ctx.beginPath(); ctx.moveTo(0, -26); ctx.lineTo(9, -23); ctx.lineTo(0, -20); ctx.fill();
+            },
+            rapido() {
+                poli([[-22, 4], [24, 4], [17, 16], [-17, 16]], '#ff6b5a', '#8f2217', 4, 16);
+                linha(-21, 8, 21, 8, '#ffffff', 2);
+                poli([[-8, 4], [10, 4], [4, -5], [-5, -5]], '#f2f6f9', '#9fb3c1', -5, 4);
+                ret(-3, -3.5, 8, 3, '#7fd4ff');
+                ret(-26, 4, 5, 9, '#2c3e50');
+            },
+            pesado() {
+                poli([[-30, 2], [30, 2], [23, 18], [-23, 18]], '#7d6b91', '#34283f', 2, 18);
+                linha(-28, 6, 28, 6, 'rgba(255,255,255,0.3)', 1.2);
+                ctx.fillStyle = 'rgba(0,0,0,0.35)';
+                for (let x = -24; x <= 24; x += 8) { ctx.beginPath(); ctx.arc(x, 11, 1.1, 0, Math.PI * 2); ctx.fill(); }
+                poli([[-14, -10], [14, -10], [14, 2], [-14, 2]], '#6c5a80', '#3b2d4b', -10, 2);
+                ret(-9, -7, 18, 3, '#9bd7ff');
+                ret(-10, -22, 5, 12, '#34495e'); ret(1, -20, 5, 10, '#34495e');
+                ret(-6, -15, 16, 6, '#4a3a5c');
+                ret(10, -14, 18, 2.6, '#2c3e50'); ret(10, -10.5, 18, 2.6, '#2c3e50');
+            },
+            submarino(b) {
+                const g = ctx.createLinearGradient(0, -8, 0, 20);
+                g.addColorStop(0, '#2bbf9f'); g.addColorStop(0.5, '#14806a'); g.addColorStop(1, '#073d33');
+                ctx.fillStyle = g;
+                ctx.beginPath(); ctx.ellipse(0, 6, 40, 13, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.ellipse(0, 6, 36, 10, 0, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+                poli([[-10, -6], [12, -6], [9, -17], [-6, -17]], '#1a9a82', '#0b5a49', -17, -6);
+                ret(-2, -27, 2.5, 10, '#c9d6d3'); ret(-2, -27, 8, 2.5, '#c9d6d3');
+                poli([[-38, 4], [-47, -5], [-42, 7]], '#0b5a49', '#0b5a49', 0, 1);
+                if (b && b.submerso) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                    ctx.beginPath(); ctx.arc(-10, -32, 3, 0, Math.PI * 2); ctx.arc(5, -38, 2, 0, Math.PI * 2); ctx.fill();
+                }
+            },
+            carrier() {
+                poli([[-58, 4], [58, 4], [50, 19], [-50, 19]], '#4b5b68', '#1c262e', 4, 19);
+                poli([[-60, -2], [62, -2], [58, 4], [-56, 4]], '#38444d', '#161d22', -2, 4);
+                ctx.fillStyle = '#f1c40f';
+                for (let x = -50; x < 40; x += 12) ctx.fillRect(x, 0.6, 7, 1.2);
+                poli([[-38, -1], [-26, -1], [-23, -5], [-33, -6]], '#e67e22', '#a04000', -6, -1);
+                poli([[-18, -1], [-6, -1], [-3, -5], [-13, -6]], '#3498db', '#1f5f8b', -6, -1);
+                poli([[22, -19], [38, -19], [38, -2], [22, -2]], '#9aa8b3', '#5b6a76', -19, -2);
+                ret(24, -15, 12, 3, '#9bd7ff');
+                ret(29, -28, 2, 9, '#cfd8dc');
+                ctx.save(); ctx.translate(30, -28); ctx.scale(Math.cos(tempoOnda * 3), 1);
+                ret(-6, -1.2, 12, 2.4, '#cfd8dc'); ctx.restore();
+            },
+            destroyer() {
+                poli([[-46, 3], [50, 3], [38, 18], [-38, 18]], '#8a98a3', '#37434d', 3, 18);
+                linha(-44, 7, 46, 7, 'rgba(255,255,255,0.28)', 1.2);
+                ret(-24, -12, 7, 12, '#3b4750');
+                poli([[-12, -11], [14, -11], [14, 3], [-12, 3]], '#6d7d89', '#3f4c56', -11, 3);
+                ret(-9, -7, 20, 3, '#9bd7ff');
+                ret(-1.5, -27, 3, 16, '#cfd8dc');
+                ctx.save(); ctx.translate(0, -27); ctx.scale(Math.cos(tempoOnda * 2.5), 1);
+                ret(-7, -1, 14, 2, '#cfd8dc'); ctx.restore();
+                ret(22, -6, 14, 6, '#4c5a65'); ret(34, -4.8, 13, 2.4, '#2c3e50');
+                ret(-40, -5, 12, 5, '#4c5a65'); ret(-50, -3.8, 11, 2.4, '#2c3e50');
+            },
+            radar() {
+                poli([[-42, 4], [42, 4], [34, 17], [-34, 17]], '#f4d03f', '#9a6f0b', 4, 17);
+                poli([[-12, -8], [12, -8], [12, 4], [-12, 4]], '#ffffff', '#b8c4cc', -8, 4);
+                ret(-8, -5, 16, 3, '#9bd7ff');
+                ret(-2, -24, 4, 16, '#e5e8ea');
+                ctx.save(); ctx.translate(0, -25); ctx.scale(Math.cos(tempoOnda * 2.2), 1);
+                ctx.fillStyle = '#dfe6e9'; ctx.strokeStyle = '#7f8c8d'; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.arc(0, 0, 13, Math.PI, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+                ctx.fillStyle = '#3498db'; ctx.beginPath(); ctx.arc(0, -3, 2.6, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            }
+        };
+
+        function desenharBarcoAlvoBase(b) {
+            ctx.save();
+            const balancoY = modoNublado ? obterDeslocamentoOnda(b.x) * 0.45 : 0;
+            const inclinacao = modoNublado ? Math.cos(b.x * 0.015 + tempoOnda) * 0.04 : 0;
+
+            if (b.tipo === 'submarino' && b.submerso) {
+                ctx.globalAlpha = 0.4;
+                ctx.translate(b.x, b.y + 8 + balancoY);
+            } else {
+                ctx.translate(b.x, b.y + balancoY);
+            }
+            ctx.rotate(inclinacao);
+            (DESENHOS[b.tipo] || DESENHOS.normal)(b);
+            ctx.restore();
+        }
+
+        function desenharAviaoDetalhado(cor, caindo, tipo) {
+            const g = ctx.createLinearGradient(0, -6, 0, 7);
+            g.addColorStop(0, caindo ? '#b9c3c8' : '#f4f6f7'); g.addColorStop(0.45, cor); g.addColorStop(1, 'rgba(40,40,40,0.9)');
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.moveTo(-30, 1); ctx.quadraticCurveTo(-8, -6, 22, -5); ctx.quadraticCurveTo(35, -3, 35, 1);
+            ctx.quadraticCurveTo(30, 6, 18, 6); ctx.lineTo(-28, 4); ctx.closePath(); ctx.fill();
+
+            ctx.fillStyle = 'rgba(140,220,255,0.92)';
+            ctx.beginPath(); ctx.arc(8, -3, 5, Math.PI, 0); ctx.fill();
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.beginPath(); ctx.arc(6, -5, 1.6, 0, Math.PI * 2); ctx.fill();
+
+            ctx.fillStyle = caindo ? '#95a5a6' : (tipo === 'bombardeiro' ? '#c0572a' : '#f39c12');
+            ctx.beginPath(); ctx.moveTo(-4, -2); ctx.lineTo(8, -18); ctx.lineTo(16, -18); ctx.lineTo(4, 2); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = 'rgba(0,0,0,0.25)';
+            ctx.beginPath(); ctx.moveTo(4, 2); ctx.lineTo(16, -18); ctx.lineTo(14, -18); ctx.lineTo(2, 2); ctx.closePath(); ctx.fill();
+
+            ctx.fillStyle = caindo ? '#95a5a6' : '#f1c40f';
+            ctx.beginPath(); ctx.moveTo(-22, 1); ctx.lineTo(-16, -9); ctx.lineTo(-12, -9); ctx.lineTo(-18, 4); ctx.closePath(); ctx.fill();
+
+            ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(-6, 1.5, 3, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.arc(-6, 1.5, 1.5, 0, Math.PI * 2); ctx.fill();
+
+            ctx.fillStyle = 'rgba(220,220,220,0.45)';
+            ctx.beginPath(); ctx.ellipse(36, 1, 2.5, 9, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#7f8c8d'; ctx.beginPath(); ctx.arc(35, 1, 2.4, 0, Math.PI * 2); ctx.fill();
+
+            if (!caindo && animacaoAviao && animacaoAviao.rodas) {
+                linha(-2, 5, -3, 11, '#2c3e50', 1.6); linha(14, 5, 15, 11, '#2c3e50', 1.6);
+                ctx.fillStyle = '#111';
+                ctx.beginPath(); ctx.arc(-3, 11.5, 2.2, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(15, 11.5, 2.2, 0, Math.PI * 2); ctx.fill();
+            }
+            if (!caindo && !(animacaoAviao && animacaoAviao.carga === false)) {
+                if (tipo === 'bombardeiro') {
+                    ctx.fillStyle = '#2c3e50'; ctx.beginPath(); ctx.ellipse(2, 9, 7, 2.8, 0, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#c0392b'; ctx.fillRect(-5, 7.5, 2.5, 3);
+                } else {
+                    ctx.fillStyle = '#7f8c8d'; ctx.beginPath(); ctx.ellipse(4, 9, 11, 2.2, 0, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.arc(14, 9, 2, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+        }
+
+        function desenharCanhao(x, y, cor, idCanhao) {
+            ctx.save();
+            ctx.translate(x, y);
+            
+            let anguloReal = 45;
+            if (estadoJogo === 'BATALHA' || estadoJogo === 'TURNO_PAUSADO') {
+                let anguloInput = parseInt(inputAngulo.value) || 45;
+                if (idCanhao === 1 && turno === 1) anguloReal = anguloInput;
+                if (idCanhao === 2 && turno === 2) anguloReal = 180 - anguloInput;
+                if (idCanhao === 1 && turno === 2) anguloReal = 45;
+                if (idCanhao === 2 && turno === 1) anguloReal = 135;
+            }
+
+            let rad = (anguloReal * Math.PI) / 180;
+            ctx.rotate(-rad);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, -6, 38, 12);
+            ctx.restore();
+
+            ctx.fillStyle = cor;
+            ctx.beginPath();
+            ctx.arc(x, y, 12, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function disparar() {
+            if (estadoJogo !== 'BATALHA' || bala || !podeAgirOnline()) return;
+
+            let angulo = parseInt(inputAngulo.value);
+            let forca = parseInt(inputForca.value);
+
+            let rad = (angulo * Math.PI) / 180;
+            let velocidadeInicial = forca * 0.32;
+
+            let xIni = turno === 1 ? navioCanhaoJ1.x : navioCanhaoJ2.x;
+            let yIni = navioCanhaoJ1.y - 5;
+            let direcao = turno === 1 ? 1 : -1;
+
+            bala = {
+                id: `${minhaSala.uid || 'local'}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                x: xIni,
+                y: yIni,
+                vx: Math.cos(rad) * velocidadeInicial * direcao,
+                vy: -Math.sin(rad) * velocidadeInicial
+            };
+
+            // Publica o primeiro ponto sem esperar o próximo intervalo da câmera.
+            publicarCameraMultiplayer(true);
+
+            criarExplosao(xIni + Math.cos(rad) * direcao * 38, yIni - Math.sin(rad) * 38, 0.45);
+            btnDisparar.disabled = true;
+            btnRadarEspecial.disabled = true;
+            btnAviaoEspecial.disabled = true;
+            btnBombardeiroEspecial.disabled = true;
+            lancarFisica();
+        }
+
+        function lancarFisica() {
+            let loopFisica = setInterval(() => {
+                bala.x += bala.vx;
+                bala.y += bala.vy;
+                bala.vy += 0.25;
+
+                let estaComSinalInterrompido = (turno === 1 && sinalInterrompidoJ1) || (turno === 2 && sinalInterrompidoJ2);
+                
+                if (!estaComSinalInterrompido) {
+                    cameraX = bala.x - 400;
+                    if (cameraX < 0) cameraX = 0;
+                    if (cameraX > larguraMundo - canvas.width) cameraX = larguraMundo - canvas.width;
+                } else {
+                    cameraX = turno === 1 ? 0 : 1600;
+                }
+
+                // Publica a câmera durante a trajetória (10 atualizações por segundo).
+                // No impacto, processarFimDoTiro grava a posição final e ela fica congelada.
+                publicarCameraMultiplayer();
+
+                desenharCenario();
+
+                if (bala.y >= 330) {
+                    splashes.push({ x: bala.x, y: 330, raio: 8, alpha: 1.0 });
+                    criarRespingo(bala.x, 330); criarOnda(bala.x, 5);
+                    // O impacto na água é um evento visual separado da trajetória:
+                    // todos os participantes reproduzem o respingo e as ondas locais.
+                    if (multiplayerAtivo() && typeof enviarBroadcastSalaSupabase === 'function') {
+                        enviarBroadcastSalaSupabase('water_impact', { x: bala.x, y: 330, amplitude: 5 })
+                            .catch(e => console.warn('[multiplayer] falha ao sincronizar impacto na água:', e));
+                    }
+                    clearInterval(loopFisica);
+                    processarFimDoTiro();
+                    return;
+                }
+
+                let alvosInimigos = turno === 1 ? basesJ2 : basesJ1;
+                for (let alvo of alvosInimigos) {
+                    let larguraHitbox = 30;
+                    if (alvo.tipo === 'carrier') larguraHitbox = 65;
+                    else if (alvo.tipo === 'submarino') larguraHitbox = 45;
+                    else if (alvo.tipo === 'destroyer') larguraHitbox = 45;
+                    else if (alvo.tipo === 'radar') larguraHitbox = 40;
+                    else if (alvo.tipo === 'pesado') larguraHitbox = 32;
+                    else if (alvo.tipo === 'rapido') larguraHitbox = 22;
+
+                    let submarinoImune = (alvo.tipo === 'submarino' && alvo.submerso);
+
+                    if (alvo.viva && !submarinoImune &&
+                        bala.x >= alvo.x - larguraHitbox && bala.x <= alvo.x + larguraHitbox &&
+                        bala.y >= alvo.y - 20 && bala.y <= alvo.y + 15) {
+                        
+                        alvo.vidas--;
+                        explodirBarco(alvo, bala.x, bala.y, alvo.vidas <= 0);
+
+                        if (alvo.vidas <= 0) {
+                            alvo.viva = false;
+                            barcosAfundando.push({ x: alvo.x, y: alvo.y, angulo: 0, alpha: 1.0, timer: 0, tipo: alvo.tipo });
+                        } else {
+                            splashes.push({ x: alvo.x, y: alvo.y, raio: 15, alpha: 0.9 });
+                        }
+                        
+                        clearInterval(loopFisica);
+                        processarFimDoTiro();
+                        return;
+                    }
+                }
+
+                if (bala.x < 0 || bala.x > larguraMundo) {
+                    clearInterval(loopFisica);
+                    processarFimDoTiro();
+                    return;
+                }
+
+            }, 1000 / 60);
+        }
+
+        function processarFimDoTiro() {
+            let estaComSinalInterrompido = (turno === 1 && sinalInterrompidoJ1) || (turno === 2 && sinalInterrompidoJ2);
+
+            bala = null;
+            // A fila garante que o estado 'sem bala' chegue depois dos últimos pontos publicados.
+            publicarCameraMultiplayer(true);
+
+            let j1Perdeu = basesJ1.every(b => !b.viva);
+            let j2Perdeu = basesJ2.every(b => !b.viva);
+
+            if (j1Perdeu || j2Perdeu) {
+                let vencedor = j1Perdeu ? "Jogador 2" : "Jogador 1";
+                statusDiv.innerText = `FIM DE JOGO! ${vencedor} venceu!`;
+                if (!multiplayerAtivo()) cameraX = turno === 1 ? 1600 : 0;
+                
+                estadoJogo = 'FIM';
+                controlsDiv.style.display = 'none';
+
+                // Para as músicas de suspense da fase final
+                musicaSecret.pause();
+                musicaDarkEnergy.pause();
+
+                // Toca a música Triage at Dawn exatamente uma vez para indicar a derrota
+                tocarMusicaPermitida(musicaTriage, true);
+
+                desenharCenario();
+                salvarEstadoMultiplayer();
+                atualizarPermissoesOnline();
+                return;
+            }
+
+            estadoJogo = 'TURNO_PAUSADO';
+            
+            verificarUltimoBarco();
+
+            if (estaComSinalInterrompido) {
+                statusDiv.innerText = `⚠️ Transmissão interrompida pelo radar! Jogador ${turno}, clique na tela para passar o turno.`;
+                if (turno === 1) sinalInterrompidoJ1 = false;
+                if (turno === 2) sinalInterrompidoJ2 = false;
+            } else {
+                statusDiv.innerText = `Tiro finalizado! Jogador ${turno}, clique na tela para passar o turno.`;
+            }
+
+            controlsDiv.style.display = 'none';
+            desenharCenario();
+            salvarEstadoMultiplayer();
+            atualizarPermissoesOnline();
+        }
+
+        function avancarTurno() {
+            if (estadoJogo !== 'TURNO_PAUSADO' || !podeAgirOnline()) return;
+
+            let meusBarcosNovos = turno === 1 ? basesJ1 : basesJ2;
+            meusBarcosNovos.forEach(b => {
+                if (b.tipo === 'submarino' && b.viva) {
+                    b.submerso = !b.submerso;
+                }
+            });
+
+            if (turno === 1) {
+                if (recargaHabilidadeJ1 > 0) recargaHabilidadeJ1--;
+            } else {
+                if (recargaHabilidadeJ2 > 0) recargaHabilidadeJ2--;
+            }
+
+            turno = turno === 1 ? 2 : 1;
+            cameraX = turno === 1 ? 0 : 1600;
+
+            inputAngulo.value = 45;
+            valorAngulo.innerText = 45;
+            inputForca.value = 50;
+            valorForca.innerText = 50;
+
+            estadoJogo = 'BATALHA';
+            
+            let subAtual = meusBarcosNovos.find(b => b.tipo === 'submarino' && b.viva);
+            let statusSubMsg = "";
+            if (subAtual) {
+                statusSubMsg = subAtual.submerso ? " (Submarino submerso/invulnerável nesta rodada!)" : " (Submarino na superfície!)";
+            }
+
+            statusDiv.innerText = `Vez do Jogador ${turno}: Ajuste a mira e atire!${statusSubMsg}`;
+            controlsDiv.style.display = 'inline-block';
+            btnDisparar.disabled = false;
+            
+            verificarUltimoBarco();
+            atualizarBotoesHabilidades();
+            desenharCenario();
+            salvarEstadoMultiplayer();
+            atualizarPermissoesOnline();
+        }
+
+        function loopAnimacaoGeral() {
+            if (idAtaqueAereoRemoto) atualizarAtaqueAereoRemoto();
+            if (estadoJogo !== 'FIM') {
+                desenharCenario();
+            }
+            requestAnimationFrame(loopAnimacaoGeral);
+        }
+
+        desenharCenario();
+        requestAnimationFrame(loopAnimacaoGeral);
+    </script>
+
+    <!-- ===== Camada 3D (Three.js): mar, céu, navios e aviões em 3D; efeitos continuam no canvas 2D por cima ===== -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+    (function () {
+        if (typeof THREE === 'undefined') return; // sem internet: o jogo continua no modo 2D antigo
+        const cv = document.getElementById('canvas3d');
+        const rd = new THREE.WebGLRenderer({ canvas: cv, antialias: true });
+        rd.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        rd.setSize(800, 400, false);
+        rd.shadowMap.enabled = true; rd.shadowMap.type = THREE.PCFSoftShadowMap;
+        rd.shadowMap.autoUpdate = false; rd.shadowMap.needsUpdate = true; // só recalcula sombras durante o clarão de um raio
+        const sc = new THREE.Scene();
+        // câmera em perspectiva alinhada ao plano z=0 do jogo (800x400): o canvas 2D por cima continua encaixando
+        const cam = new THREE.PerspectiveCamera(2 * Math.atan(200 / 900) * 180 / Math.PI, 2, 10, 4000);
+        const AGUA = -332, CAMY = AGUA + 110;
+
+        const hemi = new THREE.HemisphereLight(0xffffff, 0x234a6b, 0.75); sc.add(hemi);
+        const sol = new THREE.DirectionalLight(0xfff2d0, 0.95); sc.add(sol); sc.add(sol.target);
+        // luz do raio: vem de trás dos barcos e projeta a sombra deles na água
+        const rl = new THREE.DirectionalLight(0xcfe0ff, 0); rl.castShadow = true; sc.add(rl); sc.add(rl.target);
+        rl.shadow.mapSize.set(1024, 1024); rl.shadow.bias = -0.0008; rl.shadow.normalBias = 0.4;
+        Object.assign(rl.shadow.camera, { left: -700, right: 700, top: 500, bottom: -500, near: 50, far: 1400 });
+        rl.shadow.camera.updateProjectionMatrix();
+        const CMAR = new THREE.Color(0x1b4f72);
+
+        function textura(stops) {
+            const c = document.createElement('canvas'); c.width = c.height = 128;
+            const x = c.getContext('2d'), g = x.createRadialGradient(64, 64, 2, 64, 64, 64);
+            stops.forEach(([o, col]) => g.addColorStop(o, col)); x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+            return new THREE.CanvasTexture(c);
+        }
+        // sol atrás das nuvens
+        const sunS = new THREE.Sprite(new THREE.SpriteMaterial({ map: textura([[0, 'rgba(255,250,225,0.9)'], [0.06, 'rgba(255,245,205,0.75)'], [0.18, 'rgba(255,232,170,0.3)'], [1, 'rgba(255,220,140,0)']]), transparent: true, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }));
+        sunS.scale.set(480, 480, 1); sc.add(sunS);
+        // nuvens: aparecem aos poucos (cada uma tem seu momento) e deslizam até fechar o céu
+        const puff = textura([[0, 'rgba(255,255,255,0.95)'], [0.5, 'rgba(255,255,255,0.55)'], [1, 'rgba(255,255,255,0)']]);
+        const nuvens = [];
+        for (let L = 0; L < 2; L++) for (let r = 0; r < 4; r++) for (let c = 0; c < 16; c++) {
+            const z = -720 + L * 150, d = 900 - z, Y = 22 + r * 60 + L * 20 + Math.random() * 20;
+            const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: puff, transparent: true, depthWrite: false, fog: false, opacity: 0 }));
+            const w = 230 + Math.random() * 120; s.scale.set(w, w * 0.55, 1);
+            const x0 = -300 + (c + Math.random() * 0.8) * 190;
+            s.userData = { x0, t: Math.random() * 0.88, lado: Math.random() < 0.5 ? -1 : 1, fase: Math.random() * 6, fixa: false };
+            s.position.set(x0, -222 + (222 - Y) * d / 900, z); sc.add(s); nuvens.push(s);
+        }
+        // nuvens do céu limpo: cúmulos com borda definida e base levemente sombreada (já estão no céu antes da fase nublada)
+        const cumulo = (() => {
+            const c = document.createElement('canvas'); c.width = 256; c.height = 128;
+            const x = c.getContext('2d');
+            [[70, 84, 30], [110, 70, 40], [158, 66, 44], [200, 82, 32], [130, 88, 38], [92, 90, 26], [178, 90, 28]].forEach(([px, py, r]) => {
+                const g = x.createRadialGradient(px - r * 0.25, py - r * 0.35, r * 0.1, px, py, r);
+                g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.7, 'rgba(250,252,255,0.98)');
+                g.addColorStop(0.92, 'rgba(225,235,248,0.9)'); g.addColorStop(1, 'rgba(215,228,244,0)');
+                x.fillStyle = g; x.beginPath(); x.arc(px, py, r, 0, Math.PI * 2); x.fill();
+            });
+            x.globalCompositeOperation = 'source-atop';
+            const b = x.createLinearGradient(0, 70, 0, 118);
+            b.addColorStop(0, 'rgba(160,180,205,0)'); b.addColorStop(1, 'rgba(150,170,198,0.55)');
+            x.fillStyle = b; x.fillRect(0, 0, 256, 128);
+            return new THREE.CanvasTexture(c);
+        })();
+        for (let i = 0; i < 7; i++) {
+            const z = -700 + (i % 2) * 140, d = 900 - z, Y = 85 + (i * 29) % 65, w = 250 + (i * 47) % 90;
+            const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: cumulo, transparent: true, depthWrite: false, fog: false, opacity: 0.95 }));
+            s.scale.set(w, w / 2, 1);
+            const x0 = -250 + i * 520;
+            s.userData = { x0, t: 0, lado: 1, fase: i * 1.7, fixa: true, op: 0.95 };
+            s.position.set(x0, -222 + (222 - Y) * d / 900, z); sc.add(s); nuvens.push(s);
+        }
+
+        const skyC = document.createElement('canvas'); skyC.width = 2; skyC.height = 400;
+        const skyT = new THREE.CanvasTexture(skyC); sc.background = skyT;
+        const CEU_C = ['#2c74c2', '#6fb0e6', '#d4eaf7'], CEU_T = ['#2b3641', '#56636f', '#85919c'];
+        function pintaCeu(q) { // q: 0 = céu limpo, 1 = tempestade
+            const x = skyC.getContext('2d'), g = x.createLinearGradient(0, 0, 0, 400);
+            const c = CEU_C.map((a, i) => new THREE.Color(a).lerp(new THREE.Color(CEU_T[i]), q).getStyle());
+            g.addColorStop(0, c[0]); g.addColorStop(0.38, c[1]); g.addColorStop(0.7, c[2]); g.addColorStop(1, c[2]);
+            x.fillStyle = g; x.fillRect(0, 0, 2, 400); skyT.needsUpdate = true;
+            if (sc.fog) sc.fog.color.set(c[2]); else sc.fog = new THREE.Fog(c[2], 1000, 1750);
+        }
+
+        function alturaMar(x, z) {
+            return obterDeslocamentoOnda(x) * 0.4 + Math.sin(z * 0.025 + x * 0.012 - tempoOnda * 1.4) * 2 + alturaOndasImpacto(x, z);
+        }
+
+        // ---- mar ----
+        const Z0 = -810, Z1 = 350, ZC = (Z0 + Z1) / 2;
+        const sg = new THREE.PlaneGeometry(1800, Z1 - Z0, 140, 34);
+        sg.rotateX(-Math.PI / 2);
+        const base = Float32Array.from(sg.attributes.position.array);
+        const mar = new THREE.Mesh(sg, new THREE.MeshStandardMaterial({ color: 0x1f6fae, roughness: 0.18, metalness: 0.15 }));
+        mar.position.z = ZC; mar.receiveShadow = true; sc.add(mar);
+
+        // ---- modelos ----
+        const M = (c, ds) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.55, metalness: 0.25, side: ds ? THREE.DoubleSide : THREE.FrontSide });
+        function bx(g, w, h, d, x, y, z, c) { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M(c)); m.position.set(x, y, z); g.add(m); return m; }
+        function cy(g, r, h, x, y, c, z) { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 12), M(c)); m.position.set(x, y, z || 0); g.add(m); return m; }
+        function casco(g, wt, wb, h, d, c, ytop) {
+            const s = new THREE.Shape(); s.moveTo(-wt, 0); s.lineTo(wt, 0); s.lineTo(wb, -h); s.lineTo(-wb, -h); s.closePath();
+            const m = new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: d, bevelEnabled: true, bevelSize: 2, bevelThickness: 2, bevelSegments: 2 }), M(c));
+            m.position.set(0, ytop, -d / 2); g.add(m);
+        }
+        function vela(g, p) {
+            const s = new THREE.Shape(); s.moveTo(p[0][0], p[0][1]); s.quadraticCurveTo(p[1][0], p[1][1], p[2][0], p[2][1]); s.lineTo(p[3][0], p[3][1]);
+            g.add(new THREE.Mesh(new THREE.ExtrudeGeometry(s, { depth: 1.2, bevelEnabled: false }), M('#f4f7fa', true)));
+        }
+        function spin(g, m, v) { g.userData.sp = [m, v]; }
+
+        const B = {
+            base(g, cor) { casco(g, 35, 25, 15, 22, '#2c3e50', 14); bx(g, 70, 1.2, 22.6, 0, 14.2, 0, cor); bx(g, 30, 10, 16, 0, 19, 0, '#bdc3c7'); },
+            normal(g) { casco(g, 26, 19, 15, 18, '#b5651d', 12); cy(g, 1.8, 26, 0, 25, '#6b4a2b');
+                vela(g, [[3, 37], [22, 24], [16, 15], [3, 15]]); vela(g, [[-3, 34], [-18, 24], [-14, 16], [-3, 16]]); },
+            rapido(g) { casco(g, 22, 17, 12, 14, '#ff6b5a', 9); bx(g, 18, 9, 10, 1, 13.5, 0, '#f2f6f9'); bx(g, 8, 3, 10.6, 2, 14, 0, '#7fd4ff'); bx(g, 5, 9, 6, -24, 7, 0, '#2c3e50'); },
+            pesado(g) { casco(g, 30, 23, 18, 22, '#7d6b91', 15); bx(g, 28, 12, 14, 0, 21, 0, '#6c5a80'); bx(g, 18, 3, 14.4, 0, 22, 0, '#9bd7ff');
+                cy(g, 2.6, 12, -7, 33, '#34495e'); cy(g, 2.5, 10, 4, 32, '#34495e'); bx(g, 18, 2.6, 2.6, 19, 25, -3, '#2c3e50'); bx(g, 18, 2.6, 2.6, 19, 21, 3, '#2c3e50'); },
+            submarino(g) { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), M('#14806a')); m.scale.set(40, 12, 12); m.position.y = 2; g.add(m);
+                bx(g, 18, 11, 8, 0, 14, 0, '#1a9a82'); cy(g, 1.2, 12, 0, 24, '#c9d6d3'); bx(g, 8, 10, 1.5, -40, 5, 0, '#0b5a49'); bx(g, 8, 1.5, 14, -38, 4, 0, '#0b5a49'); },
+            carrier(g) { casco(g, 58, 50, 19, 30, '#4b5b68', 13); bx(g, 122, 3, 36, 2, 14.5, 0, '#38444d');
+                for (let x = -50; x < 40; x += 12) bx(g, 7, 0.4, 1.2, x, 16.2, 0, '#f1c40f');
+                bx(g, 14, 3, 10, -31, 18, 0, '#e67e22'); bx(g, 14, 3, 10, -11, 18, 0, '#3498db');
+                bx(g, 16, 18, 9, 30, 24, 12, '#9aa8b3'); cy(g, 1, 10, 30, 38, '#cfd8dc', 12); spin(g, bx(g, 12, 1.4, 2, 30, 43, 12, '#cfd8dc'), 3); },
+            destroyer(g) { casco(g, 46, 38, 15, 18, '#8a98a3', 15); bx(g, 26, 14, 12, 1, 22, 0, '#6d7d89'); bx(g, 20, 3, 12.4, 1, 23, 0, '#9bd7ff');
+                bx(g, 7, 12, 7, -20, 21, 0, '#3b4750'); cy(g, 1.5, 16, 0, 37, '#cfd8dc'); spin(g, bx(g, 14, 1.6, 2, 0, 45, 0, '#cfd8dc'), 2.5);
+                bx(g, 14, 6, 8, 29, 18, 0, '#4c5a65'); bx(g, 13, 2.4, 2.4, 40, 19, 0, '#2c3e50'); bx(g, 12, 5, 8, -34, 17, 0, '#4c5a65'); bx(g, 11, 2.4, 2.4, -45, 18, 0, '#2c3e50'); },
+            radar(g) { casco(g, 42, 34, 13, 16, '#f4d03f', 11); bx(g, 24, 12, 14, 0, 17, 0, '#ffffff'); cy(g, 2, 16, 0, 31, '#e5e8ea');
+                const d = new THREE.Group(); const h = new THREE.Mesh(new THREE.SphereGeometry(13, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), M('#dfe6e9', true));
+                h.rotation.z = -Math.PI / 2; d.add(h); d.position.y = 40; g.add(d); spin(g, d, 2.2); }
+        };
+
+        // [deslocamento vertical, rotação, multiplicador de k] (espelha as animações de afundar do 2D)
+        const SK = { normal: [-40, -1.45, 1.6], rapido: [-30, -9, 0], pesado: [-34, -0.14, 1], submarino: [-70, -1.35, 1.4],
+                     carrier: [-36, -0.25, 1.8], destroyer: [-46, 1, 1.3], radar: [-30, -0.2, 1] };
+
+        const reg = new Map();
+        function obter(o, t, cor) {
+            let g = reg.get(o);
+            if (!g) { g = new THREE.Group(); (B[t] || B.normal)(g, cor); g.traverse(m => { if (m.isMesh) m.castShadow = true; }); sc.add(g); reg.set(o, g); }
+            return g;
+        }
+        function opac(g, sub) { g.traverse(o => { if (o.material) { o.material.transparent = true; o.material.opacity = sub ? 0.4 : 1; } }); }
+
+        let av = null;
+        function criaAviao() {
+            const g = new THREE.Group();
+            const f = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 10), M('#e67e22')); f.scale.set(33, 5.5, 5.5); g.add(f); g.userData.f = f;
+            bx(g, 12, 1.4, 48, 2, -1, 0, '#f39c12'); bx(g, 8, 14, 1.5, -20, 7, 0, '#f1c40f'); bx(g, 6, 1, 16, -24, 1, 0, '#f1c40f'); bx(g, 10, 3, 5, 8, 5, 0, '#8cdcff');
+            g.traverse(m => { if (m.isMesh) m.castShadow = true; }); sc.add(g); return g;
+        }
+
+        let qAnt = -1;
+        window.R3D = {
+            balanco: x => -alturaMar(x, 0),
+            render() {
+                const cx = cameraX + 400;
+                cam.position.set(cx, CAMY, 900);
+                cam.updateProjectionMatrix();
+                cam.projectionMatrix.elements[9] = -(CAMY + 200) / 200; // deslocamento de lente: mantém o plano z=0 alinhado ao 2D
+
+                const pn = progressoNuvens(), q = pn * pn * (3 - 2 * pn), iR = intensidadeRaio();
+                if (Math.abs(q - qAnt) > 0.004) { // o céu escurece junto com as nuvens
+                    qAnt = q; pintaCeu(q);
+                    mar.material.color.setHex(0x1f6fae).lerp(CMAR, q);
+                    sol.intensity = 0.95 - 0.6 * q;
+                }
+                hemi.intensity = 0.75 - 0.2 * q + 0.5 * iR;
+                sol.position.set(cx + 250, 150, 500); sol.target.position.set(cx, -330, 0);
+
+                // raio: luz branco-azulada atrás dos barcos (a sombra deles cai na água)
+                const dxr = Math.max(-450, Math.min(450, luzRaio.x - cx));
+                rl.intensity = 2.8 * iR; rl.position.set(cx + dxr, AGUA + 330, -380); rl.target.position.set(cx, AGUA, 40);
+                if (iR > 0.02) rd.shadowMap.needsUpdate = true;
+
+                // sol e nuvens
+                sunS.position.set(cx + (solX() - cameraX - 400) * 2, 82, -900);
+                sunS.material.opacity = 0.6 * Math.max(0, 1 - pn * 1.3);
+                const gc = Math.min(1, 1 - 0.58 * q + 0.45 * iR);
+                nuvens.forEach(sp => {
+                    const u = sp.userData, a = Math.max(0, Math.min(1, (pn - u.t) / 0.12)), e = u.fixa ? 1 : a * a * (3 - 2 * a);
+                    sp.material.opacity = e * (u.op ? u.op - 0.35 * pn : 0.6 + 0.35 * pn);
+                    sp.position.x = u.x0 + u.lado * (1 - e) * 260 + Math.sin(tempoOnda * 0.25 + u.fase) * 14;
+                    sp.material.color.setRGB(gc, Math.min(1, gc * 1.02), Math.min(1, gc * 1.06));
+                });
+
+                mar.position.x = cx;
+                const p = sg.attributes.position;
+                for (let i = 0; i < p.count; i++) p.setY(i, AGUA + alturaMar(cx + base[i * 3], ZC + base[i * 3 + 2]));
+                p.needsUpdate = true; sg.computeVertexNormals();
+
+                const vistos = new Set();
+                const incl = x => modoNublado ? -Math.cos(x * 0.015 + tempoOnda) * 0.04 : 0;
+                const coloca = (o, g) => {
+                    vistos.add(o);
+                    g.position.set(o.x, AGUA + alturaMar(o.x, 0), 0);
+                    g.rotation.z = incl(o.x) - Math.atan((alturaMar(o.x + 6, 0) - alturaMar(o.x - 6, 0)) / 12) * 0.35; // as ondas inclinam o barco
+                    if (g.userData.sp) g.userData.sp[0].rotation.y = tempoOnda * g.userData.sp[1];
+                };
+                [[navioCanhaoJ1, '#00fff5'], [navioCanhaoJ2, '#ff4757']].forEach(([n, c]) => coloca(n, obter(n, 'base', c)));
+                [basesJ1, basesJ2].forEach(arr => arr.forEach(b => {
+                    if (!b.viva) return;
+                    const g = obter(b, b.tipo); coloca(b, g);
+                    const sub = b.tipo === 'submarino' && !!b.submerso;
+                    if (g.userData.sub !== sub) { g.userData.sub = sub; opac(g, sub); }
+                    if (sub) g.position.y -= 14;
+                }));
+                barcosAfundando.forEach(b => {
+                    const g = obter(b, b.tipo); vistos.add(b);
+                    const dur = DUR_AFUNDAR[b.tipo] || 140, k = Math.min(1, b.timer / dur), e = k * k, dir = b.x < 1200 ? 1 : -1;
+                    const s = SK[b.tipo] || SK.normal, m = s[2] ? Math.min(1, k * s[2]) : k;
+                    const salto = b.tipo === 'rapido' ? Math.sin(Math.min(1, k * 1.25) * Math.PI) * 60 : 0;
+                    g.position.set(b.x, AGUA + alturaMar(b.x, 0) + s[0] * e + salto, 0);
+                    g.rotation.z = (b.tipo === 'destroyer' ? 1 : dir) * s[1] * m;
+                    if (g.userData.sp) g.userData.sp[0].rotation.y = tempoOnda * g.userData.sp[1];
+                });
+                reg.forEach((g, o) => { if (!vistos.has(o)) { sc.remove(g); reg.delete(o); } });
+
+                if (animacaoAviao) {
+                    const a = animacaoAviao; if (!av) av = criaAviao();
+                    av.visible = true; av.position.set(a.x, -a.y, 0);
+                    av.scale.set(a.direcao * 1.3, 1.3, 1.3); av.rotation.z = -(a.angulo || 0) * a.direcao;
+                    av.userData.f.material.color.set(a.caindo ? '#7f8c8d' : (a.tipo === 'bombardeiro' ? '#d35400' : '#e67e22'));
+                } else if (av) av.visible = false;
+
+                rd.render(sc, cam);
+            }
+        };
+        desenharCenario();
+    })();
+    </script>
+    <script>
+    // ===== Tela inicial + tutorial (os números dos barcos espelham a função adicionarBarco e as hitboxes do tiro) =====
+    (function () {
+        const $ = id => document.getElementById(id);
+        const BARCOS = [
+            { e: '⛵', n: 'Normal',    v: 1, l: 60,  d: 'O barco básico: sem poder especial.' },
+            { e: '🚤', n: 'Lancha',    v: 1, l: 44,  d: 'O menor alvo do jogo, a mais difícil de acertar.' },
+            { e: '🚢', n: 'Blindado',  v: 3, l: 64,  d: 'Aguenta 3 acertos antes de afundar.' },
+            { e: '🐋', n: 'Submarino', v: 1, l: 90,  d: 'Começa na superfície e alterna entre superfície e submerso a cada turno do dono. Submerso, nada o atinge (nem tiros, nem aviões).' },
+            { e: '✈️', n: 'Carrier',   v: 2, l: 130, d: 'O maior alvo. Enquanto estiver vivo, libera o Torpedeiro e o Bombardeiro.' },
+            { e: '🛡️', n: 'Destroyer', v: 2, l: 90,  d: 'Defesa antiaérea: pode derrubar os aviões do inimigo (40% do Torpedeiro, 70% do Bombardeiro).' },
+            { e: '📡', n: 'Radar',     v: 1, l: 80,  d: 'Enquanto estiver vivo, libera a habilidade Radar.' }
+        ];
+        const alvoTxt = l => l < 50 ? 'pequeno' : l <= 70 ? 'médio' : l <= 90 ? 'grande' : 'enorme';
+        const barco = b => `<div class="tl-barco"><div class="tl-bt"><span>${b.e}</span><b>${b.n}</b></div>
+            <div class="tl-linha">Vida <span>${'❤️'.repeat(b.v)}${'🖤'.repeat(3 - b.v)}</span></div>
+            <div class="tl-linha">Alvo <span>${alvoTxt(b.l)}</span></div><div class="tl-barra"><i style="width:${b.l / 1.3}%"></i></div>
+            <p>${b.d}</p></div>`;
+        const hab = (e, n, linhas, d) => `<div class="tl-hab"><div class="tl-bt"><span>${e}</span><b>${n}</b></div>
+            ${linhas.map(([k, v]) => `<div class="tl-linha">${k} <span>${v}</span></div>`).join('')}<p>${d}</p></div>`;
+
+        const ABAS = [
+            ['🎮', 'Jogar', () => `<ol class="tl-passos">
+                <li><b>Posicione 6 barcos</b> no mar do seu lado: escolha o tipo e clique na água. O Jogador 1 joga na esquerda e o Jogador 2 na direita.</li>
+                <li><b>Mire e atire:</b> ajuste o ângulo e a força do canhão e aperte <b>DISPARAR</b>. A câmera acompanha a bala.</li>
+                <li><b>Passe o turno:</b> depois de cada jogada, clique na tela. Os jogadores se revezam.</li>
+                <li><b>Vença</b> afundando todos os barcos do inimigo.</li></ol>`],
+            ['🚢', 'Barcos', () => `<p class="tl-intro"><b>Vida</b> é quantos acertos o barco aguenta. <b>Alvo</b> é o tamanho da área onde o tiro conta como acerto: quanto maior, mais fácil de atingir.</p>
+                <div class="tl-grade">${BARCOS.map(barco).join('')}</div>`],
+            ['🎯', 'Canhão', () => `<svg viewBox="0 0 300 120" class="tl-svg"><path d="M0 104h300" stroke="#2a5298" stroke-width="6"/><path d="M34 94Q150 -28 262 100" fill="none" stroke="#ffd166" stroke-width="2.5" stroke-dasharray="5 4"/><rect x="18" y="88" width="30" height="8" rx="3" fill="#dfe8ff" transform="rotate(-35 24 94)"/><path d="M60 94a26 26 0 0 0-10-20" fill="none" stroke="#00fff5" stroke-width="2"/><text x="64" y="84" fill="#00fff5" font-size="11">ângulo</text><text x="104" y="22" fill="#ffd166" font-size="11">a força decide a distância</text><path d="M246 100l8-16h20l8 16z" fill="#d35400"/></svg>
+                <div class="tl-grade">
+                ${hab('📐', 'Ângulo', [['Vai de', '10° a 80°']], 'Define a altura do tiro. Com 45° a bala chega mais longe.')}
+                ${hab('💪', 'Força', [['Vai de', '20 a 100']], 'Define a velocidade da bala: quanto mais força, mais longe ela vai.')}
+                ${hab('💥', 'Acerto', [['Erra se', 'cair na água']], 'A bala faz um arco e cai. O tiro só acerta se passar por dentro do barco inimigo.')}</div>
+                <div class="tl-aviso">💡 <b>Dica:</b> com 45°, uma força entre 55 e 75 costuma chegar ao lado inimigo. Veja onde o primeiro tiro caiu e corrija.</div>`],
+            ['⚡', 'Habilidades', () => `<p class="tl-intro">Usar uma habilidade <b>gasta o seu turno</b> (não dá para atirar junto). As três dividem a mesma recarga de <b>4 turnos</b>; o número no botão mostra quanto falta.</p>
+                <div class="tl-grade">
+                ${hab('📡', 'Radar', [['Precisa de', 'barco Radar vivo']], 'Bloqueia a visão do inimigo: no próximo tiro dele a câmera não acompanha a bala e ele atira às cegas.')}
+                ${hab('✈️', 'Torpedeiro', [['Precisa de', 'Carrier vivo'], ['Acerto', '50%']], 'Um avião ataca um barco inimigo escolhido ao acaso e tira 1 de vida. Com Destroyer inimigo vivo, o avião pode ser abatido (40%).')}
+                ${hab('💣', 'Bombardeiro', [['Precisa de', 'Carrier vivo'], ['Acerto', '80%']], 'Igual ao Torpedeiro, mas acerta mais. Com Destroyer inimigo vivo, o avião pode ser abatido (70%).')}</div>
+                <div class="tl-aviso">🐋 Submarino submerso escapa dos aviões.</div>`]
+        ];
+
+        let comecou = false, aba = 0;
+        const pinta = () => {
+            $('tlAbas').innerHTML = ABAS.map((a, i) => `<button class="tl-aba${i === aba ? ' ativa' : ''}" onclick="tlAba(${i})">${a[0]} ${a[1]}</button>`).join('');
+            $('tlConteudo').innerHTML = ABAS[aba][2]();
+        };
+        window.tlAba = i => { aba = i; pinta(); };
+        window.abrirTutorial = () => {
+            $('tela').hidden = false; $('tlInicio').hidden = true; $('tlTutorial').hidden = false; $('btnAjuda').hidden = true;
+            $('tlVoltar').hidden = comecou; $('tlOk').textContent = comecou ? '✕ Fechar' : '▶ Entendi, vamos jogar!';
+            document.body.style.overflow = 'hidden'; pinta();
+        };
+        window.voltarInicio = () => { $('tlTutorial').hidden = true; $('tlInicio').hidden = false; };
+        window.iniciarJogo = () => { comecou = true; $('tela').hidden = true; $('btnAjuda').hidden = false; document.body.style.overflow = ''; };
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && comecou && !$('tela').hidden) iniciarJogo(); });
+        document.body.style.overflow = 'hidden'; // a tela inicial cobre o jogo até apertar JOGAR
+    })();
+    </script>
+</body>
+</html>
